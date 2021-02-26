@@ -1,0 +1,6 @@
+﻿###
+POST {{host}}/order?orderId=E1FAB15C-E7A0-47F3-AB06-462433DD65D7&customerNumber=TEST
+
+### order normal user
+POST {{host}}/order?orderId=E1FAB15C-E7A0-47F3-AB06-462433DD65D7&customerNumber=NORMALUSER
+
