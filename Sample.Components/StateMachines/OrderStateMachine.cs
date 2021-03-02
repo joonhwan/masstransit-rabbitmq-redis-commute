@@ -12,6 +12,7 @@ namespace Sample.Components.StateMachines
     {
         public OrderStateMachine()
         {
+            // STEP 1 - 상태 기게의 Event 들을 어떻게 다룰 것인지에 대한 내역.(Event는 이 상태기계 객체의 속성으로 정의된 것이어야 함)
             Event(() => OrderSubmitted, x => x.CorrelateById(m => m.Message.OrderId));
             Event(() => CheckOrder,x =>
             {
@@ -30,11 +31,16 @@ namespace Sample.Components.StateMachines
                 }));
             });
             
+            // STEP 2 - 상태기계의 상태값을 저장할 속성을 지정.
+            // 
             // `State` 형으로 정의된 상태값들이 문자열로 저장되는 필드를 지정. 
             // 즉, OrderState 는 `CurrentState` 속성에 저장한다.
             InstanceState(x => x.CurrentState);
             
+            // STEP 3 - 상태기계의 State chart  내역을 기술. 
+            
             Initially(
+                // Initially() 안에 지정된 메시지는... 이 Saga StateMachine 을 "생성"하는 메시지라고 할 수 있다.
                 When(OrderSubmitted)
                     .Then(context =>
                     {
