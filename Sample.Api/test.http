@@ -4,3 +4,5 @@ POST {{host}}/order?orderId=E1FAB15C-E7A0-47F3-AB06-462433DD65D7&customerNumber=
 ### order normal user
 POST {{host}}/order?orderId=E1FAB15C-E7A0-47F3-AB06-462433DD65D7&customerNumber=NORMALUSER
 
+###
+GET {{host}}/order?orderId=e1fab15c-e7a0-47f3-ab06-462433dd65d6

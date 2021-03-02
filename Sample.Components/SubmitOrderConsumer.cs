@@ -1,7 +1,8 @@
-﻿using System;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
+using GreenPipes.Filters;
 using MassTransit;
 using Microsoft.Extensions.Logging;
+using Sample.Components.StateMachines;
 using Sample.Contracts;
 
 namespace Sample.Components
@@ -29,6 +30,8 @@ namespace Sample.Components
 
                 if (shouldRespond)
                 {
+                    // Consumer 는 1개 이상의 Message를 반환할 수 있다.
+                    // see @more-than-one-response-message
                     await context.RespondAsync<OrderSubmissionRejected>(new
                     {
                         context.Message.OrderId,
@@ -38,7 +41,15 @@ namespace Sample.Components
                 }
 
                 return;
-            } 
+            }
+
+            // context를 통해, 어떤 Message를  Consume하는 도중에 또 다른 Message를 Publish 할 수 있다. 
+            await context.Publish<OrderSubmitted>(new
+            {
+                OrderId = context.Message.OrderId,
+                Timestamp = context.Message.Timestamp,
+                CustomerNumber = context.Message.CustomerNumber
+            });
             
             // 아래 주석 처리된 부분은... 희한하게도 수신된 메시지에서 값이 자동 복사된다고 한다.
             if (shouldRespond)

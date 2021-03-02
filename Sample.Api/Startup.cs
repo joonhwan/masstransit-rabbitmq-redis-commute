@@ -45,9 +45,12 @@ namespace Sample.Api
                         sbc.ConfigureEndpoints(provider, KebabCaseEndpointNameFormatter.Instance);
                     });
                 });
+                
+                // request client 를 di ... 다양한 방법.. 😁
                 var uriName = KebabCaseEndpointNameFormatter.Instance.Consumer<SubmitOrderConsumer>();
                 _logger.LogInformation($"UriName : {uriName}");
                 configurator.AddRequestClient<SubmitOrder>(new Uri($"exchange:{uriName}"),TimeSpan.FromDays(3));
+                configurator.AddRequestClient<CheckOrder>();
             });
             services.AddMassTransitHostedService();
             

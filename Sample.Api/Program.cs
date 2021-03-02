@@ -18,6 +18,13 @@ namespace Sample.Api
 
         public static IHostBuilder CreateHostBuilder(string[] args) =>
             Host.CreateDefaultBuilder(args)
+                .ConfigureLogging((context, logging) =>
+                {
+                    logging.AddConsole(options =>
+                    {
+                        options.TimestampFormat = "[HH:mm:ss] ";
+                    });
+                })
                 .ConfigureWebHostDefaults(webBuilder => { webBuilder.UseStartup<Startup>(); });
     }
 }

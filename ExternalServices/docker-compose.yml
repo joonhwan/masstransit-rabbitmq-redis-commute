@@ -15,6 +15,17 @@ services:
       - RABBITMQ_PASSWORD=mirero
       - RABBITMQ_COMMUNITY_PLUGINS=https://github.com/rabbitmq/rabbitmq-delayed-message-exchange/releases/download/3.8.9/rabbitmq_delayed_message_exchange-3.8.9-0199d11c.ez
 
+  redis:
+    image: redis
+    command: redis-server --port 6379 # --requirepass changeme
+    restart: always
+    ports:
+      - 6379:6379
+    # volumes:
+    #   - $PWD/redis-data:/var/lib/redis
+    #   - $PWD/redis.conf:/usr/local/etc/redis/redis.conf
 volumes:
   rabbitmq_data:
     driver: local
+  # redis_data:
+  #   driver: local

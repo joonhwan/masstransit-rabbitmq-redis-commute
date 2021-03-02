@@ -1,7 +1,22 @@
-@host = http://localhost:5000
+@host = http://192.168.100.115:5000
 
 ### 
-POST {{host}}/order?orderId=E1FAB15C-E7A0-47F3-AB06-462433DD65D7&customerNumber=NORMALUSER
+POST {{host}}/order?id=E1FAB15C-E7A0-47F3-AB06-462433DD65D6&customerNumber=NORMALUSER
 
 ###
-PUT {{host}}/order?orderId=E1FAB15C-E7A0-47F3-AB06-462433DD65D7&customerNumber=NORMALUSER
+GET {{host}}/order?id=e1fab15c-e7a0-47f3-ab06-462433dd65d6
+
+###
+POST {{host}}/order?id=00c4e886-f054-4cc7-ab51-0eceb92d7501&customerNumber=NORMALUSER
+
+###
+PUT {{host}}/order?id=E1FAB15C-E7A0-47F3-AB06-462433DD65D5&customerNumber=NORMALUSER
+
+###
+POST {{host}}/order?id=dab61421-873c-4c3f-82c5-d9a50d9f710e&customerNumber=JamesBond
+
+###
+POST {{host}}/order?id=dab61421-873c-4c3f-82c5-d9a50d9f710e&customerNumber=JamesBond
+
+###
+GET {{host}}/order?id=dab61421-873c-4c3f-82c5-d9a50d9f710a
