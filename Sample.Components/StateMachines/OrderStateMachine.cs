@@ -69,7 +69,7 @@ namespace Sample.Components.StateMachines
                         context.Init<OrderStatus>(new
                         {
                             OrderId = context.Instance.CorrelationId,
-                            State = $"상태는요:{context.Instance.CurrentState}",
+                            State = $"{context.Instance.CurrentState}",
                         })
                     )
             );

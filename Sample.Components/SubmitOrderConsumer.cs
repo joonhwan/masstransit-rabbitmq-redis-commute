@@ -2,6 +2,7 @@
 using GreenPipes.Filters;
 using MassTransit;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using Sample.Components.StateMachines;
 using Sample.Contracts;
 
@@ -14,6 +15,11 @@ namespace Sample.Components
         public SubmitOrderConsumer(ILogger<SubmitOrderConsumer> logger)
         {
             _logger = logger;
+        }
+        
+        public SubmitOrderConsumer()
+        {
+            _logger = new NullLogger<SubmitOrderConsumer>();
         }
         
         public async Task Consume(ConsumeContext<SubmitOrder> context)
