@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Linq;
 using System.Threading.Tasks;
+using Automatonymous.Graphing;
+using Automatonymous.Visualizer;
 using MassTransit;
 using MassTransit.Testing;
 using NUnit.Framework;
@@ -63,16 +65,16 @@ namespace Sample.Components.Test
             }
         }
 
-                [Test]
+        [Test]
         public async Task Should_respond_to_status_check()
         {
             var harness = new InMemoryTestHarness()
             {
                 TestTimeout = TimeSpan.FromSeconds(1)
             };
-            var orderStateMachine = new OrderStateMachine(); 
+            var orderStateMachine = new OrderStateMachine();
             var saga = harness.StateMachineSaga<OrderState, OrderStateMachine>(orderStateMachine);
-            
+
             await harness.Start();
 
             var orderId = NewId.NextGuid();
@@ -103,6 +105,114 @@ namespace Sample.Components.Test
             {
                 await harness.Stop();
             }
+        }
+
+        [Test]
+        public async Task Should_be_cancelled_when_CustomerAccountClosed()
+        {
+            var harness = new InMemoryTestHarness()
+            {
+                TestTimeout = TimeSpan.FromSeconds(1)
+            };
+            var orderStateMachine = new OrderStateMachine(); 
+            var saga = harness.StateMachineSaga<OrderState, OrderStateMachine>(orderStateMachine);
+            
+            await harness.Start();
+
+            var orderId = NewId.NextGuid();
+            var customerNumber = "1234";
+
+            try
+            {
+                // 아래는 "없는 걸" 테스트 하므로, Timeout 문제 발생함. 따라서 test harness에 timeout 을 주었다. 
+                Assert.That(saga.Created.Select(x => x.CorrelationId == orderId).Any(), Is.False);
+
+                await harness.Bus.Publish<OrderSubmitted>(new
+                {
+                    OrderId = orderId,
+                    Timestamp = InVar.Timestamp,
+                    CustomerNumber = customerNumber
+                });
+
+                Assert.That(saga.Created.Select(x => x.CorrelationId == orderId).Any(), Is.True);
+
+                var instanceId = await saga.Exists(orderId, x => x.Submitted);
+                Assert.That(instanceId, Is.Not.Null);
+
+                await harness.Bus.Publish<CustomerAccountClosed>(new
+                {
+                    //CustomerId = NewId.NextGuid(), // 상관없는 필드.
+                    Timestamp = InVar.Timestamp,
+                    CustomerNumber = customerNumber,
+                });
+
+                instanceId = await saga.Exists(orderId, x => x.Cancelled);
+                Assert.That(instanceId, Is.Not.Null);
+
+            }
+            finally
+            {
+                await harness.Stop();
+            }
+        }
+        
+        [Test]
+        public async Task Should_be_accept_when_order_is_accepted()
+        {
+            var harness = new InMemoryTestHarness()
+            {
+                TestTimeout = TimeSpan.FromSeconds(1)
+            };
+            var orderStateMachine = new OrderStateMachine(); 
+            var saga = harness.StateMachineSaga<OrderState, OrderStateMachine>(orderStateMachine);
+            
+            await harness.Start();
+
+            var orderId = NewId.NextGuid();
+            var customerNumber = "1234";
+
+            try
+            {
+                // 아래는 "없는 걸" 테스트 하므로, Timeout 문제 발생함. 따라서 test harness에 timeout 을 주었다. 
+                Assert.That(saga.Created.Select(x => x.CorrelationId == orderId).Any(), Is.False);
+
+                await harness.Bus.Publish<OrderSubmitted>(new
+                {
+                    OrderId = orderId,
+                    Timestamp = InVar.Timestamp,
+                    CustomerNumber = customerNumber
+                });
+
+                Assert.That(saga.Created.Select(x => x.CorrelationId == orderId).Any(), Is.True);
+
+                var instanceId = await saga.Exists(orderId, x => x.Submitted);
+                Assert.That(instanceId, Is.Not.Null);
+
+                await harness.Bus.Publish<OrderAccepted>(new
+                {
+                    OrderId = orderId,
+                    Timestamp = InVar.Timestamp,
+                });
+
+                instanceId = await saga.Exists(orderId, x => x.Accepted);
+                Assert.That(instanceId, Is.Not.Null);
+
+            }
+            finally
+            {
+                await harness.Stop();
+            }
+        }
+
+        [Test]
+        public void Show_me_the_StateMachine()
+        {
+            // 주어진 상태기계를 GraphViz 로 시각화가 가능.
+            var orderStateMachine = new OrderStateMachine();
+            var graph = orderStateMachine.GetGraph();
+            var generator = new StateMachineGraphvizGenerator(graph);
+            var dots = generator.CreateDotFile();
+            Console.WriteLine(dots);
         }
 
     }

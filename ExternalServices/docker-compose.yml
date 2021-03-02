@@ -24,8 +24,18 @@ services:
     # volumes:
     #   - $PWD/redis-data:/var/lib/redis
     #   - $PWD/redis.conf:/usr/local/etc/redis/redis.conf
+
+  mongodb:
+    image: bitnami/mongodb:latest
+    ports:
+      - "27017:27017"
+    volumes:
+      - "mongodb_data:/bitnami/mongodb"
+
 volumes:
   rabbitmq_data:
     driver: local
   # redis_data:
   #   driver: local
+  mongodb_data:
+    driver: local

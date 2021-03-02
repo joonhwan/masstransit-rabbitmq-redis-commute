@@ -7,16 +7,24 @@ POST {{host}}/order?id=E1FAB15C-E7A0-47F3-AB06-462433DD65D6&customerNumber=NORMA
 GET {{host}}/order?id=e1fab15c-e7a0-47f3-ab06-462433dd65d6
 
 ###
-POST {{host}}/order?id=00c4e886-f054-4cc7-ab51-0eceb92d7501&customerNumber=NORMALUSER
+POST {{host}}/order?id=00c4e886-f054-4cc7-ab51-0eceb92d7501&customerNumber=TEST
 
 ###
 PUT {{host}}/order?id=E1FAB15C-E7A0-47F3-AB06-462433DD65D5&customerNumber=NORMALUSER
 
-###
+### James Bond 첫번째 주문
 POST {{host}}/order?id=dab61421-873c-4c3f-82c5-d9a50d9f710e&customerNumber=JamesBond
 
-###
-POST {{host}}/order?id=dab61421-873c-4c3f-82c5-d9a50d9f710e&customerNumber=JamesBond
+### James Bond 두번째 주문
+POST {{host}}/order?id=827628e9-4e07-48e1-a4b8-d83c7be099e6&customerNumber=JamesBond
+
+
+### James Bond 세번째 주문
+POST {{host}}/order?id=827628e9-4e07-48e1-a4b8-d83c7be099e6&customerNumber=JamesBond
+
 
 ###
-GET {{host}}/order?id=dab61421-873c-4c3f-82c5-d9a50d9f710a
+GET {{host}}/order?id=827628e9-4e07-48e1-a4b8-d83c7be099e6
+
+###
+DELETE {{host}}/customer?id=a495334d-7438-4ed6-95d1-94d83f061353&customerNumber=JamesBond
