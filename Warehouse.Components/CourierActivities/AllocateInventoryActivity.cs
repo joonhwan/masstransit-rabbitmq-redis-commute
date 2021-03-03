@@ -56,6 +56,7 @@ namespace Warehouse.Components.CourierActivities
                 ItemNumber = itemNumber,
                 Quantity = quantity
             });
+            Console.WriteLine("Allocate Inventory Activity  완료합니다. : got InventoryAllocated Message : {0}", response);
 
             // Activity 의 처리 결과를 반환하는 다양한 방법이 Courier.ExecuteContext 에 존재.
             // - context.FaultedWithVariables()

@@ -38,8 +38,8 @@ DELETE {{host}}/customer?id=a495334d-7438-4ed6-95d1-94d83f061353&customerNumber=
 ### -----------------------------------------------
 ###         Fulfill Order 시나리오 테스트
 ###
-@orderId = aa281b62-83d5-42b4-9d67-f08a01f0a243
-@customer = JimmyPage13
+@orderId = a521ce6e-0ead-4fb4-9eac-42f701e1dc91
+@customer = JimmyPage18
 ### SubmitOrder -주문.
 POST {{host}}/order?id={{orderId}}&customerNumber={{customer}}
 

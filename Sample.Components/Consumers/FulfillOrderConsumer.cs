@@ -2,6 +2,7 @@
 using System.Threading.Tasks;
 using MassTransit;
 using MassTransit.Courier;
+using MassTransit.Courier.Contracts;
 using Sample.Contracts;
 
 namespace Sample.Components.Consumers
@@ -31,6 +32,12 @@ namespace Sample.Components.Consumers
             
             // 분산처리중 필요한 "변수"를 추가.
             builder.AddVariable("OrderId", context.Message.OrderId);
+
+            await builder.AddSubscription(context.SourceAddress, RoutingSlipEvents.Completed, endpoint =>
+            {
+                Console.WriteLine("@**@ RoutingSlip DONE ");
+                return Task.CompletedTask;
+            });
 
             var routingSlip = builder.Build();
 

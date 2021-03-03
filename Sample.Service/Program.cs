@@ -15,9 +15,6 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using Sample.Components.Consumers;
 using Sample.Components.StateMachines;
 using Sample.Components.StateMachines.OrderStateMachineActivities;
-using Warehouse.Components.Consumers;
-using Warehouse.Components.CourierActivities;
-using Warehouse.Contracts;
 using IHost = Microsoft.Extensions.Hosting.IHost;
 
 namespace Sample.Service
@@ -54,14 +51,6 @@ namespace Sample.Service
                         // IConsumer<T> 및 IConsumerDefinition<T> 를 모두 찾아서  configurator.AddConsumer() 한다...
                         configurator.AddConsumersFromNamespaceContaining<SubmitOrderConsumer>();
 
-                        {
-                            // Courier 를 사용하기 위해...
-                            //  --> 음. 이렇게 되면, Sample.Xxxx 하는 시스템은 Warehouse.Xxxx 에 의존성이 생김.
-                            configurator.AddConsumersFromNamespaceContaining<AllocateInventoryConsumer>();
-                            configurator.AddActivitiesFromNamespaceContaining<AllocateInventoryActivity>();
-                        }
-
-
                         // Saga 사용하려면 이게 필요.
                         configurator
                             .AddSagaStateMachine<OrderStateMachine, OrderState>(typeof(OrderStateMachineDefinition))
@@ -96,8 +85,6 @@ namespace Sample.Service
                                 //x.CollectionName = "orderState"
                             })
                             ;
-                        
-                        configurator.AddRequestClient<AllocateInventory>(); // 이거 왜 필요하지 ?
                         
                         // 일종의 Mediator 역할을 하는 Bus 를 추가.
                         // configurator.AddInMemoryBus(); // in-memory bus. 프로세스간 통신 X 
