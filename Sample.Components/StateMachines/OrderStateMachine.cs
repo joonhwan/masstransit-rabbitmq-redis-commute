@@ -102,6 +102,10 @@ namespace Sample.Components.StateMachines
                         })
                     ),
                 When(OrderAccepted)
+                    .Then(x =>
+                    {
+                        Console.WriteLine("@@@ OrderAccepted 수신됨.");
+                    })
                     .Activity(x => x.OfType<AcceptOrderActivity>())
                     .TransitionTo(Accepted)
             );

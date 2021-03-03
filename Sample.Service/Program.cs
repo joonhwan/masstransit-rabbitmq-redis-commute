@@ -12,7 +12,11 @@ using MassTransit.MongoDbIntegration;
 using MassTransit.RabbitMqTransport;
 using MassTransit.RedisIntegration;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Sample.Components.Consumers;
 using Sample.Components.StateMachines;
+using Sample.Components.StateMachines.OrderStateMachineActivities;
+using Warehouse.Components.Consumers;
+using Warehouse.Components.CourierActivities;
 using IHost = Microsoft.Extensions.Hosting.IHost;
 
 namespace Sample.Service
@@ -37,6 +41,8 @@ namespace Sample.Service
             Host.CreateDefaultBuilder(args)
                 .ConfigureServices((hostContext, services) =>
                 {
+                    services.AddScoped<AcceptOrderActivity>();
+                    
                     //services.TryAddSingleton(KebabCaseEndpointNameFormatter.Instance); --> 이렇게 해도 되고. @2 처럼 해도 되고? 
                     services.AddMassTransit(configurator =>
                     {
@@ -44,7 +50,15 @@ namespace Sample.Service
                         // SubmitOrderConsumer가 있는 assembly내의 모든 consumer를 추가. 
                         // IConsumer<T> 및 IConsumerDefinition<T> 를 모두 찾아서  configurator.AddConsumer() 한다...
                         configurator.AddConsumersFromNamespaceContaining<SubmitOrderConsumer>();
-                        
+
+                        {
+                            // Courier 를 사용하기 위해...
+                            //  --> 음. 이렇게 되면, Sample.Xxxx 하는 시스템은 Warehouse.Xxxx 에 의존성이 생김.
+                            
+                            configurator.AddActivitiesFromNamespaceContaining<AllocateInventoryActivity>();
+                        }
+
+
                         // Saga 사용하려면 이게 필요.
                         configurator
                             .AddSagaStateMachine<OrderStateMachine, OrderState>(typeof(OrderStateMachineDefinition))
@@ -80,9 +94,12 @@ namespace Sample.Service
                             })
                             ;
                         
-                        // 일종의 Mediator 역할을 하는 Bus 를 추가. (즉, configurator.AddInMemoryBus(); 대신 아래처럼 하면 Inter-process Comm이 된다.)
-                        configurator.AddBus(ConfigureBus);
+                        // 일종의 Mediator 역할을 하는 Bus 를 추가.
+                        // configurator.AddInMemoryBus(); // in-memory bus. 프로세스간 통신 X 
+                        configurator.AddBus(ConfigureBus); // out-of-process bus. 브로커(rabbitmq, azure service ubs...) 프로세스 통신 O
                     });
+                    
+                    // 윈도우 서비스 처럼 Start/Stop 을 가지는 Service 객체를 추가.
                     services.AddHostedService<MassTransitConsoleHostedService>();
                 });
 

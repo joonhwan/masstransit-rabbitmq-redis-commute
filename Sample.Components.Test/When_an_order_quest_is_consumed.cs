@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using MassTransit;
 using MassTransit.Testing;
 using NUnit.Framework;
+using Sample.Components.Consumers;
 using Sample.Contracts;
 
 namespace Sample.Components.Test

@@ -3,11 +3,10 @@ using System.Threading.Tasks;
 using GreenPipes;
 using MassTransit;
 using MassTransit.ConsumeConfigurators;
-using MassTransit.Contracts;
 using MassTransit.Definition;
 using Sample.Contracts;
 
-namespace Sample.Components
+namespace Sample.Components.Consumers
 {
     // Consumer로 들어오는 Pipeline을 구성하기 위한 class 
     // 

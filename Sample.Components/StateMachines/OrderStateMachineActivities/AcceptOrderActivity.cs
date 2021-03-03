@@ -2,6 +2,7 @@
 using System.Threading.Tasks;
 using Automatonymous;
 using GreenPipes;
+using MassTransit;
 using MassTransit.Courier.Contracts;
 using Sample.Contracts;
 
@@ -17,6 +18,7 @@ namespace Sample.Components.StateMachines.OrderStateMachineActivities
     // 같은 기존 구현을 참고하면 좋다. 
     // 
     // Custom Activity 에 대한 문서는 https://masstransit-project.com/usage/sagas/automatonymous.html#custom
+    // (NOTE: Automatanous 의 Activity 는 Masstrransit.Courier의 Activity 와 다른것.
     public class AcceptOrderActivity : Activity<OrderState, OrderAccepted>
     {
         public void Probe(ProbeContext context)
@@ -33,7 +35,15 @@ namespace Sample.Components.StateMachines.OrderStateMachineActivities
         public async Task Execute(BehaviorContext<OrderState, OrderAccepted> context, Behavior<OrderState, OrderAccepted> next)
         {
             // TODO  Do something here...
-            Console.WriteLine("AcceptOrderActivity 가 정상작업을 처리했습니다😁. Event = {0}, OrderId = {1}", context.Event, context.Data.OrderId);
+            Console.WriteLine("AcceptOrderActivity 가 작업합니다😁. Event = {0}, OrderId = {1}", context.Event, context.Data.OrderId);
+
+            var consumeContext = context.GetPayload<ConsumeContext>();
+            var sendEndpoint = await consumeContext.GetSendEndpoint(new Uri("exchange:fulfill-order"));
+            await sendEndpoint.Send<FulfillOrder>(new
+            {
+                OrderId = context.Data.OrderId,
+            });
+            
             // Middleware! 이니까... next() 를 수행해...
             await next.Execute(context).ConfigureAwait(false);
         }

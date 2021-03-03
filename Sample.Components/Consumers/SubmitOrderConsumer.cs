@@ -1,12 +1,10 @@
 ﻿using System.Threading.Tasks;
-using GreenPipes.Filters;
 using MassTransit;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
-using Sample.Components.StateMachines;
 using Sample.Contracts;
 
-namespace Sample.Components
+namespace Sample.Components.Consumers
 {
     public class SubmitOrderConsumer : IConsumer<SubmitOrder>
     {

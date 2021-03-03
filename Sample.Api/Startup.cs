@@ -8,6 +8,7 @@ using MassTransit;
 using MassTransit.Definition;
 using Microsoft.Extensions.Logging;
 using Sample.Components;
+using Sample.Components.Consumers;
 using Sample.Contracts;
 
 namespace Sample.Api

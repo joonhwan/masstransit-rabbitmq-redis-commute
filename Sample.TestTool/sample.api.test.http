@@ -16,15 +16,35 @@ PUT {{host}}/order?id=E1FAB15C-E7A0-47F3-AB06-462433DD65D5&customerNumber=NORMAL
 POST {{host}}/order?id=dab61421-873c-4c3f-82c5-d9a50d9f710e&customerNumber=JamesBond
 
 ### James Bond 두번째 주문
-POST {{host}}/order?id=827628e9-4e07-48e1-a4b8-d83c7be099e6&customerNumber=JamesBond
+POST {{host}}/order?id=827628e9-4e07-48e1-a4b8-d83c7be099e6&customerNumber=JamesBond2
 
 
 ### James Bond 세번째 주문
-POST {{host}}/order?id=827628e9-4e07-48e1-a4b8-d83c7be099e6&customerNumber=JamesBond
+POST {{host}}/order?id=70da21d4-4e20-442c-9d2b-571196985359&customerNumber=JamesBond3
+
+
+### James Bond 세번째 주문
+POST {{host}}/order?id=775ad454-1625-477e-a9ea-aa0a5d478618&customerNumber=JamesBond4
+
 
 
 ###
-GET {{host}}/order?id=827628e9-4e07-48e1-a4b8-d83c7be099e6
+GET {{host}}/order?id=775ad454-1625-477e-a9ea-aa0a5d478618
 
 ###
-DELETE {{host}}/customer?id=a495334d-7438-4ed6-95d1-94d83f061353&customerNumber=JamesBond
+DELETE {{host}}/customer?id=a495334d-7438-4ed6-95d1-94d83f061353&customerNumber=JamesBond3
+
+
+### -----------------------------------------------
+###         Fulfill Order 시나리오 테스트
+###
+@orderId = ac3473d0-640d-4607-a5cb-132e17ea8a0b
+@customer = JimmyPage6
+### SubmitOrder -주문.
+POST {{host}}/order?id={{orderId}}&customerNumber={{customer}}
+
+### CheckOrder - 현재 주문 상태 확인.
+GET {{host}}/order?id={{orderId}}
+
+### OrderAccepted - 주문 수령 ... 외부 시스템(Warehouse?) 시뮬레이션.
+PATCH {{host}}/order?id={{orderId}}

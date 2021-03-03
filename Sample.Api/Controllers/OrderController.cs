@@ -15,18 +15,21 @@ namespace Sample.Api.Controllers
         private IRequestClient<SubmitOrder> _submitOrderRequestClient;
         private readonly IRequestClient<CheckOrder> _checkOrderRequestClient;
         private readonly ISendEndpointProvider _sendEndpointProvider;
+        private readonly IPublishEndpoint _publishEndpoint;
 
         public OrderController(
             ILogger<OrderController> logger,
             IRequestClient<SubmitOrder> submitOrderRequestClient,
             IRequestClient<CheckOrder> checkOrderRequestClient,
-            ISendEndpointProvider sendEndpointProvider
+            ISendEndpointProvider sendEndpointProvider,
+            IPublishEndpoint publishEndpoint
         )
         {
             _logger = logger;
             _submitOrderRequestClient = submitOrderRequestClient;
             _checkOrderRequestClient = checkOrderRequestClient;
             _sendEndpointProvider = sendEndpointProvider;
+            _publishEndpoint = publishEndpoint;
         }
 
         [HttpGet]
@@ -90,11 +93,24 @@ namespace Sample.Api.Controllers
                 return BadRequest(response.Message);   
             }
         }
+
+        [HttpPatch]
+        public async Task<IActionResult> Patch(Guid id)
+        {
+            Console.WriteLine("@@@ OrderAccepted 시뮬레이션..");
+            await _publishEndpoint.Publish<OrderAccepted>(new
+            {
+                OrderId = default(Guid),
+                Timestamp = default(DateTime)
+            });
+
+            return Accepted();
+        }
         
         [HttpPut]
         public async Task<IActionResult> Put(Guid id, string customerNumber)
         {
-            var endpoint = await _sendEndpointProvider.GetSendEndpoint(new Uri("exchange:submit-order"));
+            var endpoint = await _sendEndpointProvider.GetSendEndpoint(new Uri("exchange:submit-order")); // was "exchange: ...."
             await endpoint.Send<SubmitOrder>(new
             {
                 OrderId = id,
