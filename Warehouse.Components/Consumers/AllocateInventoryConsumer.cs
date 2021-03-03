@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading.Tasks;
 using MassTransit;
 using Warehouse.Contracts;
 
@@ -8,7 +9,8 @@ namespace Warehouse.Components.Consumers
     {
         public async Task Consume(ConsumeContext<AllocateInventory> context)
         {
-            await Task.Delay(500);
+            Console.WriteLine("@@ AlocateInventoryConsumer 가 작업을 시작합니다. ");
+            await Task.Delay(5000);
 
             var request = context.Message;
             await context.RespondAsync<InventoryAllocated>(new
@@ -17,6 +19,8 @@ namespace Warehouse.Components.Consumers
                 request.ItemNumber,
                 request.Quantity,
             });
+            
+            Console.WriteLine("@@ AlocateInventoryConsumer 가 작업을 완료했습니다.");
             
         }
     }

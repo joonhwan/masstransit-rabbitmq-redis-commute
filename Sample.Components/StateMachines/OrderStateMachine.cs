@@ -78,7 +78,14 @@ namespace Sample.Components.StateMachines
                     {
                         Console.WriteLine("어어.. 고객이 이탈했네요. 주문 취소합니다.");
                     })
-                    .TransitionTo(Cancelled)
+                    .TransitionTo(Cancelled),
+                When(OrderAccepted)
+                    .Then(x =>
+                    {
+                        Console.WriteLine("@@@ OrderAccepted 수신됨.");
+                    })
+                    .Activity(x => x.OfType<AcceptOrderActivity>())
+                    .TransitionTo(Accepted)
             );
 
             // `DuringAny` 는 Initial/Final 을 제외한 모든 상태.
@@ -100,14 +107,7 @@ namespace Sample.Components.StateMachines
                             OrderId = context.Instance.CorrelationId,
                             State = $"{context.Instance.CurrentState}",
                         })
-                    ),
-                When(OrderAccepted)
-                    .Then(x =>
-                    {
-                        Console.WriteLine("@@@ OrderAccepted 수신됨.");
-                    })
-                    .Activity(x => x.OfType<AcceptOrderActivity>())
-                    .TransitionTo(Accepted)
+                    )
             );
         }
         

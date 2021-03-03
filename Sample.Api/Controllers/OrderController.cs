@@ -100,8 +100,8 @@ namespace Sample.Api.Controllers
             Console.WriteLine("@@@ OrderAccepted 시뮬레이션..");
             await _publishEndpoint.Publish<OrderAccepted>(new
             {
-                OrderId = default(Guid),
-                Timestamp = default(DateTime)
+                OrderId = id,
+                Timestamp = InVar.Timestamp,
             });
 
             return Accepted();

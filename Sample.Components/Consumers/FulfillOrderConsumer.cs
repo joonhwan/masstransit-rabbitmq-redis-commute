@@ -23,6 +23,7 @@ namespace Sample.Components.Consumers
             // (https://masstransit-project.com/usage/producers.html#send) 
             builder.AddActivity("AllocateInventory", new Uri("queue:allocate-inventory_execute"), new
             {
+                // OrderId = context.Message.OrderId, // 아래에 Variable 로 전달해봄.
                 ItemNumber = "ITEM123",
                 Quantity = 10.0m
             });

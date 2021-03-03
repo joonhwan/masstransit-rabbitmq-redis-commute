@@ -32,10 +32,11 @@ namespace Warehouse.Components.CourierActivities
 
         public async Task<ExecutionResult> Execute(ExecuteContext<AllocateInventoryArguments> context)
         {
-            Console.WriteLine("Allocate Inventory Activity 시작되었음. ");
-            // 입력 인자 확인 
             var args = context.Arguments;
             var itemNumber = args.ItemNumber;
+
+            Console.WriteLine("Allocate Inventory Activity 시작되었음. arg={0}", args);
+            // 입력 인자 확인 
             if (string.IsNullOrEmpty(itemNumber))
             {
                 throw new ArgumentNullException(nameof(itemNumber));

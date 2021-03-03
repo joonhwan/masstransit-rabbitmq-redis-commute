@@ -17,6 +17,7 @@ using Sample.Components.StateMachines;
 using Sample.Components.StateMachines.OrderStateMachineActivities;
 using Warehouse.Components.Consumers;
 using Warehouse.Components.CourierActivities;
+using Warehouse.Contracts;
 using IHost = Microsoft.Extensions.Hosting.IHost;
 
 namespace Sample.Service
@@ -41,6 +42,8 @@ namespace Sample.Service
             Host.CreateDefaultBuilder(args)
                 .ConfigureServices((hostContext, services) =>
                 {
+                    // configurator.AddActivity() 로 할 수 없는 Automatanous 의 Activity 는 이런식으로...
+                    //   ---> Statemachine 에서... x.OfType<AcceptOrderActivity() 부분이 동작하려면.. 이렇게 해야 됨.
                     services.AddScoped<AcceptOrderActivity>();
                     
                     //services.TryAddSingleton(KebabCaseEndpointNameFormatter.Instance); --> 이렇게 해도 되고. @2 처럼 해도 되고? 
@@ -54,7 +57,7 @@ namespace Sample.Service
                         {
                             // Courier 를 사용하기 위해...
                             //  --> 음. 이렇게 되면, Sample.Xxxx 하는 시스템은 Warehouse.Xxxx 에 의존성이 생김.
-                            
+                            configurator.AddConsumersFromNamespaceContaining<AllocateInventoryConsumer>();
                             configurator.AddActivitiesFromNamespaceContaining<AllocateInventoryActivity>();
                         }
 
@@ -93,6 +96,8 @@ namespace Sample.Service
                                 //x.CollectionName = "orderState"
                             })
                             ;
+                        
+                        configurator.AddRequestClient<AllocateInventory>(); // 이거 왜 필요하지 ?
                         
                         // 일종의 Mediator 역할을 하는 Bus 를 추가.
                         // configurator.AddInMemoryBus(); // in-memory bus. 프로세스간 통신 X 
