@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk.Worker">
+
+    <PropertyGroup>
+        <TargetFramework>netcoreapp3.1</TargetFramework>
+        <UserSecretsId>dotnet-HelloQuartzWorker-7B096F0E-A4A8-4EB7-9BA7-83612F8F0EE8</UserSecretsId>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.Extensions.Hosting" Version="3.1.12" />
+        <PackageReference Include="Quartz" Version="3.2.4" />
+    </ItemGroup>
+</Project>
