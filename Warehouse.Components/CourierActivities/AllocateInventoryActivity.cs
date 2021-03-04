@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using MassTransit;
 using MassTransit.Courier;
 using MassTransit.Courier.Results;
+using Microsoft.Extensions.Logging;
 using Warehouse.Contracts;
 
 namespace Warehouse.Components.CourierActivities
@@ -10,10 +11,15 @@ namespace Warehouse.Components.CourierActivities
     public class AllocateInventoryActivity : MassTransit.Courier.IActivity<AllocateInventoryArguments, AllocateInventoryLog>
     {
         private readonly IRequestClient<AllocateInventory> _client;
+        private readonly ILogger<AllocateInventoryActivity> _logger;
 
-        public AllocateInventoryActivity(IRequestClient<AllocateInventory> client)
+        public AllocateInventoryActivity(
+            IRequestClient<AllocateInventory> client,
+            ILogger<AllocateInventoryActivity> logger
+        )
         {
             _client = client;
+            _logger = logger;
         }
 
         public class MyInventoryAllocated : InventoryAllocated
@@ -35,7 +41,7 @@ namespace Warehouse.Components.CourierActivities
             var args = context.Arguments;
             var itemNumber = args.ItemNumber;
 
-            Console.WriteLine("Allocate Inventory Activity 시작되었음. arg={0}", args);
+            _logger.LogInformation("Allocate Inventory Activity 시작되었음. arg={Arg}", args);
             // 입력 인자 확인 
             if (string.IsNullOrEmpty(itemNumber))
             {
@@ -56,7 +62,8 @@ namespace Warehouse.Components.CourierActivities
                 ItemNumber = itemNumber,
                 Quantity = quantity
             });
-            Console.WriteLine("Allocate Inventory Activity  완료합니다. : got InventoryAllocated Message : {0}", response);
+            _logger.LogInformation("Allocate Inventory Activity  완료합니다. : got InventoryAllocated Message " +
+                                   ": {Response}", response);
 
             // Activity 의 처리 결과를 반환하는 다양한 방법이 Courier.ExecuteContext 에 존재.
             // - context.FaultedWithVariables()
@@ -71,7 +78,8 @@ namespace Warehouse.Components.CourierActivities
 
         public async Task<CompensationResult> Compensate(CompensateContext<AllocateInventoryLog> context)
         {
-            // 지금까지 해오던 작업을 Rollback 하는 시나리오가 발생. 
+            // 지금까지 해오던 작업을 Rollback 하는 시나리오가 발생.
+            _logger.LogWarning("AllocateInventory 작업을 되돌립니다...");
             
             // 현 Activity(=Allocate Inventory, 재고할당)수준에서 Rollback 할 수 있는 처리가 여기 들어감
             // 예를 들면, "재고할당을 취소" 하는 요청을 보내는 작업...
@@ -86,18 +94,5 @@ namespace Warehouse.Components.CourierActivities
             //              "보상"하는 방식으로 Masstransit.Courier 가 동작하기 때문)
             return context.Compensated();
         }
-    }
-    
-    
-    public interface AllocateInventoryArguments
-    {
-        Guid OrderId { get; }
-        string ItemNumber { get; }
-        decimal Quantity { get; }
-    }
-
-    public interface AllocateInventoryLog
-    {
-        Guid AllocationId { get; }
     }
 }

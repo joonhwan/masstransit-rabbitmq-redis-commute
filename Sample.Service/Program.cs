@@ -12,7 +12,9 @@ using MassTransit.MongoDbIntegration;
 using MassTransit.RabbitMqTransport;
 using MassTransit.RedisIntegration;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Logging;
 using Sample.Components.Consumers;
+using Sample.Components.CourierActivities;
 using Sample.Components.StateMachines;
 using Sample.Components.StateMachines.OrderStateMachineActivities;
 using IHost = Microsoft.Extensions.Hosting.IHost;
@@ -37,6 +39,13 @@ namespace Sample.Service
 
         private static IHostBuilder CreateHostBuilder(string[] args) =>
             Host.CreateDefaultBuilder(args)
+                .ConfigureLogging((context, logging) =>
+                {
+                    logging.AddConsole(options =>
+                    {
+                        options.TimestampFormat = "[HH:mm:ss] ";
+                    });
+                })
                 .ConfigureServices((hostContext, services) =>
                 {
                     // configurator.AddActivity() 로 할 수 없는 Automatanous 의 Activity 는 이런식으로...
@@ -51,6 +60,9 @@ namespace Sample.Service
                         // IConsumer<T> 및 IConsumerDefinition<T> 를 모두 찾아서  configurator.AddConsumer() 한다...
                         configurator.AddConsumersFromNamespaceContaining<SubmitOrderConsumer>();
 
+                        // 이 모듈에서 정의한 Actitivity 등록.
+                        configurator.AddActivitiesFromNamespaceContaining<PaymentActivity>();
+                        
                         // Saga 사용하려면 이게 필요.
                         configurator
                             .AddSagaStateMachine<OrderStateMachine, OrderState>(typeof(OrderStateMachineDefinition))

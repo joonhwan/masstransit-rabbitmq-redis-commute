@@ -22,13 +22,25 @@ namespace Sample.Components.Consumers
             //
             // "queue:allocate-inventory_execute" ..는  Masstransit 6.x 부터 지원되는 short address
             // (https://masstransit-project.com/usage/producers.html#send) 
+            
+            // Activity 작업 #1 : 재고할당하기. 
             builder.AddActivity("AllocateInventory", new Uri("queue:allocate-inventory_execute"), new
             {
                 // OrderId = context.Message.OrderId, // 아래에 Variable 로 전달해봄.
                 ItemNumber = "ITEM123",
                 Quantity = 10.0m
             });
-            // ... Activity 를 여러개 생성할 수 있음. 
+            
+            // ... Activity 를 여러개 생성할 수 있음.
+            
+            // Activity 작업 #2 : 결재하기.
+            builder.AddActivity("Payment", new Uri("queue:payment_execute"), new
+            {
+                //OrderId = context.Message.OrderId, // 아래 Variable 로 전달된다?!
+                Amount = 99.95m,
+                //CardNumber = "5999-1234-5000-4321", // 실패 할 경우 (5999 로 시작)
+                CardNumber = "6987-1234-5000-4321",
+            });
             
             // 분산처리중 필요한 "변수"를 추가.
             builder.AddVariable("OrderId", context.Message.OrderId);

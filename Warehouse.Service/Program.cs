@@ -11,6 +11,7 @@ using MassTransit.MongoDbIntegration;
 using MassTransit.RabbitMqTransport;
 using MassTransit.RedisIntegration;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Logging;
 using Warehouse.Components.Consumers;
 using Warehouse.Components.CourierActivities;
 using Warehouse.Components.StateMachines;
@@ -36,6 +37,13 @@ namespace Warehouse.Service
 
         private static IHostBuilder CreateHostBuilder(string[] args) =>
             Host.CreateDefaultBuilder(args)
+                .ConfigureLogging((context, logging) =>
+                {
+                    logging.AddConsole(options =>
+                    {
+                        options.TimestampFormat = "[HH:mm:ss] ";
+                    });
+                })
                 .ConfigureServices((hostContext, services) =>
                 {
                     //services.TryAddSingleton(KebabCaseEndpointNameFormatter.Instance); --> 이렇게 해도 되고. @2 처럼 해도 되고? 
@@ -49,7 +57,7 @@ namespace Warehouse.Service
                         configurator.AddActivitiesFromNamespaceContaining<AllocateInventoryActivity>();
                         // masstransit saga 등록
                         configurator
-                            .AddSagaStateMachine<AllocationStateMachine, AllocationState>()
+                            .AddSagaStateMachine<AllocationStateMachine, AllocationState>(typeof(AllocationStateMachineDefinition))
                             .MongoDbRepository(x =>
                             {
                                 x.Connection = "mongodb://localhost:27017";
