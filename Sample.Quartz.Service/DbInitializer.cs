@@ -36,6 +36,7 @@ namespace Sample.Quartz.Service
                     catch (Exception e)
                     {
                         Console.WriteLine("Cannot Generate Database @ {0}", dbFilePath);
+                        Console.WriteLine("  Error : {0}", e);
                         throw;
                     }
                     

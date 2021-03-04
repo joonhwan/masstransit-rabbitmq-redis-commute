@@ -13,6 +13,7 @@ using MassTransit.RedisIntegration;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Warehouse.Components.Consumers;
 using Warehouse.Components.CourierActivities;
+using Warehouse.Components.StateMachines;
 using Warehouse.Contracts;
 using IHost = Microsoft.Extensions.Hosting.IHost;
 namespace Warehouse.Service
@@ -42,12 +43,23 @@ namespace Warehouse.Service
                     {
                         configurator.SetKebabCaseEndpointNameFormatter(); // @2 --> @! 처럼 해도되고?! 이게 더 읽기 편하네.
                         
-                        // Courier 를 사용하기 위해...
-                        //  --> 음. 이렇게 되면, Sample.Xxxx 하는 시스템은 Warehouse.Xxxx 에 의존성이 생김.
+                        // masstransit consumer 등록
                         configurator.AddConsumersFromNamespaceContaining<AllocateInventoryConsumer>();
+                        // masstransit courier 를 위한 activity 등록.
                         configurator.AddActivitiesFromNamespaceContaining<AllocateInventoryActivity>();
+                        // masstransit saga 등록
+                        configurator
+                            .AddSagaStateMachine<AllocationStateMachine, AllocationState>()
+                            .MongoDbRepository(x =>
+                            {
+                                x.Connection = "mongodb://localhost:27017";
+                                x.DatabaseName = "allocationDb";
+                                // Collection이름을 명시적으로 줄 수도 있다.
+                                // --> 주지 않으면 State를 지정한 Type의 이름(=`OrderState`)으로 부터 추론(="order.state")
+                                //x.CollectionName = "orderState"
+                            })
+                            ;
                         
-
                         // Saga 사용하려면 이게 필요.
                         // configurator
                         //     .AddSagaStateMachine<OrderStateMachine, OrderState>(typeof(OrderStateMachineDefinition))
@@ -61,7 +73,8 @@ namespace Warehouse.Service
                         //     })
                         //     ;
                         
-                        configurator.AddRequestClient<AllocateInventory>(); // 이거 왜 필요하지 ?
+                        // AllocateInventoryActivity 가 IRequestClient<AllocateInventory> 를 필요로 함.
+                        configurator.AddRequestClient<AllocateInventory>();
                         
                         // 일종의 Mediator 역할을 하는 Bus 를 추가.
                         // configurator.AddInMemoryBus(); // in-memory bus. 프로세스간 통신 X 
@@ -78,6 +91,11 @@ namespace Warehouse.Service
             {
                 configurator.Host("rabbitmq://admin:mirero@localhost:5672");
                 configurator.ConfigureEndpoints(serviceProvider);
+                
+                // Warehouse.Service 에서 실행되는 Saga Statemachine 이 Schedule 기능을 사용. 
+                // --> Schedule 된 메시지를 어디로 보내야 하는지 여기서 설정.(전송된 메시지는 Sample.Quartz.Service에서 수신하여, 필요한 곳으로 relay?)
+                //  (참고: https://masstransit-project.com/advanced/scheduling/ )
+                configurator.UseMessageScheduler(new Uri("queue:quartz-scheduler"));
                 
                 // 사용자가 명시적으로 임의 EndPoint 를 만들고 설정가능.
                 // configurator.ReceiveEndpoint("something-else", e =>
