@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Text;
 using System.Threading.Tasks;
 using Automatonymous;
 using GreenPipes;
@@ -67,9 +66,15 @@ namespace Warehouse.Components.StateMachines
                     .Finalize(), // .TransitionTo(Final),
                 When(AllocationReleaseRequested)
                     .Then(context => _logger.LogInformation("Allocation 의 재고할당 해제됨. Saga 제거됨. AllocationId={0}", context.Data.AllocationId))
-                    .Unschedule(HoldExpiration)
+                    .Unschedule(HoldExpiration) // --> Allocated를 벗어나면 무조건 되도록 수정해보는거 고려(quantum 방식)  
                     .Finalize()
             );
+            // WhenLeave(Allocated, binder =>
+            // {
+            //     _logger.LogInformation("⚡ HoldExpiration 의 스케쥴링 취소합니다.");
+            //     return binder.Unschedule(HoldExpiration);
+            // });
+
 
             During(Released,
                 When(AllocationCreated)

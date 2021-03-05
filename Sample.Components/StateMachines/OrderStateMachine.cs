@@ -20,6 +20,7 @@ namespace Sample.Components.StateMachines
 
             Event(() => OrderAccepted, x => x.CorrelateById(m => m.Message.OrderId));
             Event(() => OrderFulfillmentFaulted, x => x.CorrelateById(m => m.Message.OrderId));
+            Event(() => OrderFulfillmentCompleted, x => x.CorrelateById(m => m.Message.OrderId));
             Event(() => CheckOrder,x =>
             {
                 x.CorrelateById(m => m.Message.OrderId);
@@ -89,6 +90,8 @@ namespace Sample.Components.StateMachines
             );
 
             During(Accepted,
+                When(OrderFulfillmentCompleted)
+                    .TransitionTo(Completed),
                 When(OrderFulfillmentFaulted)
                     .Then(context =>
                     {
@@ -125,12 +128,14 @@ namespace Sample.Components.StateMachines
         public State Accepted { get; private set; }
         public State Cancelled { get; private set; }
         public State Faulted { get; private set; }
+        public State Completed { get; private set; }
         
         public Event<OrderSubmitted> OrderSubmitted { get; private set; }
         public Event<CheckOrder> CheckOrder { get; private set; }
         // @more-saga-1 OrderStateMachine 이 전혀 다른 Event 를 받는 것을 시연. --> 특정 사용자가 탈퇴한 경우.
         public Event<CustomerAccountClosed> CustomerAccountClosed { get; private set; }
         public Event<OrderAccepted> OrderAccepted { get; private set; }
+        public Event<OrderFulfillmentCompleted> OrderFulfillmentCompleted { get; private set; }
         public Event<OrderFulfillmentFaulted> OrderFulfillmentFaulted { get; private set; }
     }
 

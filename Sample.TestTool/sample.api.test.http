@@ -38,8 +38,8 @@ DELETE {{host}}/customer?id=a495334d-7438-4ed6-95d1-94d83f061353&customerNumber=
 ### -----------------------------------------------
 ###         Fulfill Order 시나리오 테스트
 ###
-@orderId=8969af1e-d9bb-475d-90e0-7548fa0bcba0
-@customer=JimmyPage56
+@orderId=3d96d8af-d15f-41c7-ad89-be27191248c3
+@customer=JimmyPage59
 @paymentCardNumber=5999-1234-5000-4321
 ### SubmitOrder -주문.
 POST {{host}}/order?id={{orderId}}&customerNumber={{customer}}&paymentCardNumber={{paymentCardNumber}}

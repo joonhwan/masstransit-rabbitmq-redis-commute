@@ -56,12 +56,28 @@ namespace Sample.Components.Consumers
                     FaultReason ="Fault원인은 ???" // Fault된 Exception 을  어떻게 가져오지???
                 })
             );
+            
+            await builder.AddSubscription(
+                context.SourceAddress,
+                RoutingSlipEvents.Completed | RoutingSlipEvents.Supplemental, // Supplemental 은 문서를 참고. :-(
+                RoutingSlipEventContents.None, // 회람쪽지 내역 전체를 보낼 필요는 없다(덩치도 크다고 한다)
+                endpoint => endpoint.Send<OrderFulfillmentCompleted>(new
+                {
+                    OrderId = context.Message.OrderId,
+                    Timestamp = InVar.Timestamp,
+                })
+            );
 
-            await builder.AddSubscription(context.SourceAddress, RoutingSlipEvents.Completed, endpoint =>
-            {
-                Console.WriteLine("@**@ RoutingSlip DONE ");
-                return Task.CompletedTask;
-            });
+            await builder.AddSubscription(
+                context.SourceAddress,
+                RoutingSlipEvents.Completed,
+                RoutingSlipEventContents.None,
+                endpoint =>
+                {
+                    Console.WriteLine("@**@ RoutingSlip DONE ");
+                    return Task.CompletedTask;
+                }
+            );
 
             var routingSlip = builder.Build();
 
