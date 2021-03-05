@@ -6,6 +6,7 @@ namespace Sample.Contracts
     public interface FulfillOrder
     {
         Guid OrderId { get;  }
-        string CardNumber { get; }
+        string CustomerNumber { get; }
+        string PaymentCardNumber { get; }
     }
 }

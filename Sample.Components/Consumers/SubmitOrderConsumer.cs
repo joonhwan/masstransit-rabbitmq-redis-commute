@@ -52,7 +52,8 @@ namespace Sample.Components.Consumers
             {
                 OrderId = context.Message.OrderId,
                 Timestamp = context.Message.Timestamp,
-                CustomerNumber = context.Message.CustomerNumber
+                CustomerNumber = context.Message.CustomerNumber,
+                PaymentCardNumber = context.Message.PaymentCardNumber
             });
             
             // 아래 주석 처리된 부분은... 희한하게도 수신된 메시지에서 값이 자동 복사된다고 한다.

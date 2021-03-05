@@ -16,41 +16,41 @@ namespace Sample.Components.CourierActivities
         }
         public async Task<ExecutionResult> Execute(ExecuteContext<PaymentArguments> context)
         {
-            var cardNumber = context.Arguments.CardNumber;
-            _logger.LogInformation("{CardNumber} 에 대하여 결재가 진행중입니다", cardNumber);
+            var paymentCardNumber = context.Arguments.PaymentCardNumber;
+            _logger.LogInformation("{PaymentCardNumber} 에 대하여 결재가 진행중입니다", paymentCardNumber);
             
-            if (string.IsNullOrEmpty(cardNumber))
+            if (string.IsNullOrEmpty(paymentCardNumber))
             {
-                throw new ArgumentNullException(nameof(cardNumber));
+                throw new ArgumentNullException(nameof(paymentCardNumber));
             }
 
             await Task.Delay(5000); // allocation 해제가 바로 일어나지는 않게...
             
-            if (cardNumber.StartsWith("5999"))
+            if (paymentCardNumber.StartsWith("5999"))
             {
-                _logger.LogError("5999 로 시작하는 CardNumber 는 사용불가함", cardNumber);
-                throw new InvalidOperationException($"5999 로 시작하는 CardNumber 는 사용불가함");
+                _logger.LogError("5999 로 시작하는 PaymentCardNumber 는 사용불가함", paymentCardNumber);
+                throw new InvalidOperationException($"5999 로 시작하는 PaymentCardNumber 는 사용불가함");
             }
             
             await Task.Delay(2000);
             
-            _logger.LogInformation("{CardNumber} 에 대하여 결재가 완료되었습니다", cardNumber);
+            _logger.LogInformation("{PaymentCardNumber} 에 대하여 결재가 완료되었습니다", paymentCardNumber);
 
             return context.Completed<PaymentLog>(new
             {
-                AuthorizationCode = $"{context.Arguments.CardNumber}-OK",
-                CardNumber = cardNumber
+                AuthorizationCode = $"{context.Arguments.PaymentCardNumber}-OK",
+                PaymentCardNumber = paymentCardNumber
             });
         }
 
         public async Task<CompensationResult> Compensate(CompensateContext<PaymentLog> context)
         {
-            var cardNumber = context.Log.CardNumber;
-            _logger.LogWarning("{CardNumber} 에 대하여 결재취소가 시작됨", cardNumber);
+            var paymentCardNumber = context.Log.PaymentCardNumber;
+            _logger.LogWarning("{PaymentCardNumber} 에 대하여 결재취소가 시작됨", paymentCardNumber);
 
             await Task.Delay(1000);
             
-            _logger.LogWarning("{CardNumber} 에 대하여 결재취소가 완료됨", cardNumber);
+            _logger.LogWarning("{PaymentCardNumber} 에 대하여 결재취소가 완료됨", paymentCardNumber);
             
             return context.Compensated();
         }
@@ -60,12 +60,12 @@ namespace Sample.Components.CourierActivities
     {
          Guid OrderId { get; }
          decimal Amount { get; }
-         string CardNumber { get; }
+         string PaymentCardNumber { get; }
     }
 
     public interface PaymentLog
     {
-        string CardNumber { get; }
+        string PaymentCardNumber { get; }
         string AuthorizationCode { get; }
     }
 }

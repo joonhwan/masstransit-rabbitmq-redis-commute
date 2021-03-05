@@ -19,7 +19,10 @@ namespace Sample.Components.StateMachines.OrderStateMachineActivities
     // 
     // Custom Activity 에 대한 문서는 https://masstransit-project.com/usage/sagas/automatonymous.html#custom
     // (NOTE: Automatanous 의 Activity 는 Masstrransit.Courier의 Activity 와 다른것.
-    public class AcceptOrderActivity : Activity<OrderState, OrderAccepted>
+    //
+    // OrderState 를 관리하는 상태기계에서 OrderAccepted 메시지에 의해 실행되는 활동임.
+    // --->  Activity<OrderState, OrderAccepted> 
+    public class AcceptOrderActivity : Activity<OrderState, OrderAccepted> 
     {
         public void Probe(ProbeContext context)
         {
@@ -41,8 +44,13 @@ namespace Sample.Components.StateMachines.OrderStateMachineActivities
             var sendEndpoint = await consumeContext.GetSendEndpoint(new Uri("exchange:fulfill-order"));
             await sendEndpoint.Send<FulfillOrder>(new
             {
+                // Automatonymous 의 Activity는 ....
+                //
+                // 이 Activity 를 실행하게끔 만든 Event 의 데이터에 접근이 가능.
                 OrderId = context.Data.OrderId,
-                CardNumber = context.Data.CardNumber
+                // 이 Activity 를 수행하고 있는 StateMachine의 상태정보에 접근이 가능.
+                PaymentCardNumber = context.Instance.PaymentCardNumber,
+                CustomerNumber = context.Instance.CustomerNumber,
             });
             
             // Middleware! 이니까... next() 를 수행해...

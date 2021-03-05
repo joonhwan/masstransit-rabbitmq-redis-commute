@@ -38,14 +38,14 @@ DELETE {{host}}/customer?id=a495334d-7438-4ed6-95d1-94d83f061353&customerNumber=
 ### -----------------------------------------------
 ###         Fulfill Order 시나리오 테스트
 ###
-@orderId=3365e0be-b5c9-414b-ae8c-eb54e7bf7d17
-@customer=JimmyPage48
-@cardNumber=5999-1234-5000-4321
+@orderId=8969af1e-d9bb-475d-90e0-7548fa0bcba0
+@customer=JimmyPage56
+@paymentCardNumber=5999-1234-5000-4321
 ### SubmitOrder -주문.
-POST {{host}}/order?id={{orderId}}&customerNumber={{customer}}
+POST {{host}}/order?id={{orderId}}&customerNumber={{customer}}&paymentCardNumber={{paymentCardNumber}}
 
 ### CheckOrder - 현재 주문 상태 확인.
 GET {{host}}/order?id={{orderId}}
 
 ### OrderAccepted - 주문 수령 ... 외부 시스템(Warehouse?) 시뮬레이션.
-PATCH {{host}}/order?id={{orderId}}&cardNumber={{cardNumber}}
+PATCH {{host}}/order?id={{orderId}}

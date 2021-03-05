@@ -58,6 +58,7 @@ namespace Sample.Components.StateMachines
                         context.Instance.SubmitDate = context.Data.Timestamp;
                         context.Instance.CustomerNumber = context.Data.CustomerNumber;
                         context.Instance.Updated = DateTime.UtcNow;
+                        context.Instance.PaymentCardNumber = context.Data.PaymentCardNumber;
                     })
                     .TransitionTo(Submitted)
             );
@@ -70,6 +71,7 @@ namespace Sample.Components.StateMachines
                         Console.WriteLine("이미 Submit 되었는데, 왜 또 하는거죠. 😒");
                         context.Instance.SubmitDate ??= context.Data.Timestamp;
                         context.Instance.CustomerNumber ??= context.Data.CustomerNumber;
+                        context.Instance.PaymentCardNumber ??= context.Data.PaymentCardNumber;
                     }),
                 When(CustomerAccountClosed)
                     .Then(context =>
@@ -149,6 +151,6 @@ namespace Sample.Components.StateMachines
         public DateTime? SubmitDate { get; set; }
         public DateTime? Updated { get; set; }
         public string FaultReason { get; set; }
-
+        public string PaymentCardNumber { get; set; }
     }
 }

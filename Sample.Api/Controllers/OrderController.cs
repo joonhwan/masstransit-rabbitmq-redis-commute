@@ -71,7 +71,7 @@ namespace Sample.Api.Controllers
         }
         
         [HttpPost]
-        public async Task<IActionResult> Post(Guid id, string customerNumber)
+        public async Task<IActionResult> Post(Guid id, string customerNumber, string paymentCardNumber)
         {
             // Consumer 는 1개 이상의 Message를 반환할 수 있다.
             // @more-than-one-response-message 
@@ -79,7 +79,8 @@ namespace Sample.Api.Controllers
             {
                 OrderId = id,
                 Timestamp = InVar.Timestamp,//TimeStamp = InVar.Timestamp,
-                CustomerNumber = customerNumber
+                CustomerNumber = customerNumber,
+                PaymentCardNumber = paymentCardNumber
             });
 
             if (accepted.IsCompletedSuccessfully)
@@ -95,13 +96,12 @@ namespace Sample.Api.Controllers
         }
 
         [HttpPatch]
-        public async Task<IActionResult> Patch(Guid id, string cardNumber)
+        public async Task<IActionResult> Patch(Guid id)
         {
             Console.WriteLine("@@@ OrderAccepted 시뮬레이션..");
             await _publishEndpoint.Publish<OrderAccepted>(new
             {
                 OrderId = id,
-                CardNumber = cardNumber,
                 Timestamp = InVar.Timestamp,
             });
 

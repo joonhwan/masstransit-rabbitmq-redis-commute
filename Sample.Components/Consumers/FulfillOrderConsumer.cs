@@ -38,8 +38,8 @@ namespace Sample.Components.Consumers
             {
                 //OrderId = context.Message.OrderId, // 아래 Variable 로 전달된다?!
                 Amount = 99.95m,
-                //CardNumber = "5999-1234-5000-4321", // 실패 할 경우 (5999 로 시작)
-                CardNumber = context.Message.CardNumber,
+                //PaymentCardNumber = "5999-1234-5000-4321", // 실패 할 경우 (5999 로 시작)
+                PaymentCardNumber = context.Message.PaymentCardNumber,
             });
             
             // 분산처리중 필요한 "변수"를 추가.
@@ -47,7 +47,7 @@ namespace Sample.Components.Consumers
 
             await builder.AddSubscription(
                 context.SourceAddress,
-                RoutingSlipEvents.Faulted,
+                RoutingSlipEvents.Faulted | RoutingSlipEvents.Supplemental, // Supplemental 은 문서를 참고. :-(
                 RoutingSlipEventContents.None, // 회람쪽지 내역 전체를 보낼 필요는 없다(덩치도 크다고 한다)
                 endpoint => endpoint.Send<OrderFulfillmentFaulted>(new
                 {
