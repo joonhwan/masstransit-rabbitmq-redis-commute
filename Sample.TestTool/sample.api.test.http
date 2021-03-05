@@ -38,8 +38,9 @@ DELETE {{host}}/customer?id=a495334d-7438-4ed6-95d1-94d83f061353&customerNumber=
 ### -----------------------------------------------
 ###         Fulfill Order 시나리오 테스트
 ###
-@orderId = e2fd6d1f-6359-4962-aaef-27f9d218523f
-@customer = JimmyPage43
+@orderId=3365e0be-b5c9-414b-ae8c-eb54e7bf7d17
+@customer=JimmyPage48
+@cardNumber=5999-1234-5000-4321
 ### SubmitOrder -주문.
 POST {{host}}/order?id={{orderId}}&customerNumber={{customer}}
 
@@ -47,4 +48,4 @@ POST {{host}}/order?id={{orderId}}&customerNumber={{customer}}
 GET {{host}}/order?id={{orderId}}
 
 ### OrderAccepted - 주문 수령 ... 외부 시스템(Warehouse?) 시뮬레이션.
-PATCH {{host}}/order?id={{orderId}}
+PATCH {{host}}/order?id={{orderId}}&cardNumber={{cardNumber}}

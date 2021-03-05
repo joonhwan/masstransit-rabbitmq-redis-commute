@@ -39,11 +39,23 @@ namespace Sample.Components.Consumers
                 //OrderId = context.Message.OrderId, // 아래 Variable 로 전달된다?!
                 Amount = 99.95m,
                 //CardNumber = "5999-1234-5000-4321", // 실패 할 경우 (5999 로 시작)
-                CardNumber = "6987-1234-5000-4321",
+                CardNumber = context.Message.CardNumber,
             });
             
             // 분산처리중 필요한 "변수"를 추가.
             builder.AddVariable("OrderId", context.Message.OrderId);
+
+            await builder.AddSubscription(
+                context.SourceAddress,
+                RoutingSlipEvents.Faulted,
+                RoutingSlipEventContents.None, // 회람쪽지 내역 전체를 보낼 필요는 없다(덩치도 크다고 한다)
+                endpoint => endpoint.Send<OrderFulfillmentFaulted>(new
+                {
+                    OrderId = context.Message.OrderId,
+                    Timestamp = InVar.Timestamp,
+                    FaultReason ="Fault원인은 ???" // Fault된 Exception 을  어떻게 가져오지???
+                })
+            );
 
             await builder.AddSubscription(context.SourceAddress, RoutingSlipEvents.Completed, endpoint =>
             {

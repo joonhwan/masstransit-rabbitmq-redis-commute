@@ -17,11 +17,9 @@ namespace Sample.Components.StateMachines
             Event(() => OrderSubmitted, x => x.CorrelateById(m => m.Message.OrderId));
             // --> OrderSubmitted 는 OrderStateMachine Saga 가 생성되게 하는 이벤트. 만일, Correlation 한 속성값이 GUID 아니라면, 
             //   https://masstransit-project.com/usage/sagas/automatonymous.html#event-2  에 표시된 것 처럼 x.CorrelateById().SelectId() 구문으로 그냥 GUID 에 해당하는 CorrelationId 값을 하나 만들어야 한다.
-            
-            Event(() => OrderAccepted, x =>
-            {
-                x.CorrelateById(m => m.Message.OrderId);
-            });
+
+            Event(() => OrderAccepted, x => x.CorrelateById(m => m.Message.OrderId));
+            Event(() => OrderFulfillmentFaulted, x => x.CorrelateById(m => m.Message.OrderId));
             Event(() => CheckOrder,x =>
             {
                 x.CorrelateById(m => m.Message.OrderId);
@@ -88,6 +86,16 @@ namespace Sample.Components.StateMachines
                     .TransitionTo(Accepted)
             );
 
+            During(Accepted,
+                When(OrderFulfillmentFaulted)
+                    .Then(context =>
+                    {
+                        //TODO 아직 Fault Reason이 정상적으로 들어오지는 않는다.
+                        context.Instance.FaultReason = context.Data.FaultReason;
+                    })
+                    .TransitionTo(Faulted)
+            );
+
             // `DuringAny` 는 Initial/Final 을 제외한 모든 상태.
             
             // DuringAny(
@@ -114,12 +122,14 @@ namespace Sample.Components.StateMachines
         public State Submitted { get; private set; }
         public State Accepted { get; private set; }
         public State Cancelled { get; private set; }
+        public State Faulted { get; private set; }
         
         public Event<OrderSubmitted> OrderSubmitted { get; private set; }
         public Event<CheckOrder> CheckOrder { get; private set; }
         // @more-saga-1 OrderStateMachine 이 전혀 다른 Event 를 받는 것을 시연. --> 특정 사용자가 탈퇴한 경우.
         public Event<CustomerAccountClosed> CustomerAccountClosed { get; private set; }
         public Event<OrderAccepted> OrderAccepted { get; private set; }
+        public Event<OrderFulfillmentFaulted> OrderFulfillmentFaulted { get; private set; }
     }
 
     public class OrderState 
@@ -138,6 +148,7 @@ namespace Sample.Components.StateMachines
         public string CustomerNumber { get; set; }
         public DateTime? SubmitDate { get; set; }
         public DateTime? Updated { get; set; }
+        public string FaultReason { get; set; }
 
     }
 }

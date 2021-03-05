@@ -42,6 +42,7 @@ namespace Sample.Components.StateMachines.OrderStateMachineActivities
             await sendEndpoint.Send<FulfillOrder>(new
             {
                 OrderId = context.Data.OrderId,
+                CardNumber = context.Data.CardNumber
             });
             
             // Middleware! 이니까... next() 를 수행해...

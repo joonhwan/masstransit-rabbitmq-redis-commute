@@ -45,6 +45,7 @@ namespace Warehouse.Components.StateMachines
                             "Allocation이 생성됨. AllocationId={AllocationId}",
                             context.Data.AllocationId
                         );
+                        context.Instance.AllocationHoldDuration = context.Data.HoldDuration;
                         return Task.CompletedTask;
                     })
                     // `AllocationCreated` 이벤트를 받으면, AllocationHoldDurationExpired 이벤트를 schedule 건다
@@ -112,6 +113,7 @@ namespace Warehouse.Components.StateMachines
         
         // AllocationStatemachine 에서 사용할 Scheduler 취소용 토큰?
         public Guid? HoldDurationToken { get; set; }
+        public TimeSpan? AllocationHoldDuration { get; set; }
     }
 
     public class AllocationStateMachineDefinition : SagaDefinition<AllocationState>

@@ -95,12 +95,13 @@ namespace Sample.Api.Controllers
         }
 
         [HttpPatch]
-        public async Task<IActionResult> Patch(Guid id)
+        public async Task<IActionResult> Patch(Guid id, string cardNumber)
         {
             Console.WriteLine("@@@ OrderAccepted 시뮬레이션..");
             await _publishEndpoint.Publish<OrderAccepted>(new
             {
                 OrderId = id,
+                CardNumber = cardNumber,
                 Timestamp = InVar.Timestamp,
             });
 

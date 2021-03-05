@@ -45,6 +45,13 @@ namespace Sample.Quartz.Service
                 if (args != null)
                     config.AddCommandLine(args);
             })
+            .ConfigureLogging((context, logging) =>
+            {
+                logging.AddConsole(options =>
+                {
+                    options.TimestampFormat = "[HH:mm:ss] ";
+                });
+            })
             .ConfigureServices((hostContext, services) =>
             {
                 services.Configure<AppConfig>(hostContext.Configuration.GetSection("AppConfig"));
