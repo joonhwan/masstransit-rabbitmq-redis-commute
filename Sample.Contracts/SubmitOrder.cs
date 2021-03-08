@@ -11,5 +11,6 @@ namespace Sample.Contracts
         DateTime Timestamp { get; }
         string CustomerNumber { get; }   
         string PaymentCardNumber { get; }
+        string Notes { get; }
     }
 }

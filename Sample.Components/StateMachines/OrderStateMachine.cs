@@ -1,7 +1,10 @@
 ﻿using System;
+using System.Linq;
 using Automatonymous;
 using MassTransit;
 using MassTransit.Saga;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using MongoDB.Bson.Serialization.Attributes;
 using Sample.Components.StateMachines.OrderStateMachineActivities;
 using Sample.Contracts;
@@ -11,8 +14,12 @@ namespace Sample.Components.StateMachines
 {
     public class OrderStateMachine : MassTransitStateMachine<OrderState>
     {
-        public OrderStateMachine()
+        private readonly ILogger<OrderStateMachine> _logger;
+
+        public OrderStateMachine(ILogger<OrderStateMachine> logger = null)
         {
+            _logger = logger ?? NullLogger<OrderStateMachine>.Instance;
+            
             // STEP 1 - 상태 기게의 Event 들을 어떻게 다룰 것인지에 대한 내역.(Event는 이 상태기계 객체의 속성으로 정의된 것이어야 함)
             Event(() => OrderSubmitted, x => x.CorrelateById(m => m.Message.OrderId));
             // --> OrderSubmitted 는 OrderStateMachine Saga 가 생성되게 하는 이벤트. 만일, Correlation 한 속성값이 GUID 아니라면, 
@@ -21,6 +28,7 @@ namespace Sample.Components.StateMachines
             Event(() => OrderAccepted, x => x.CorrelateById(m => m.Message.OrderId));
             Event(() => OrderFulfillmentFaulted, x => x.CorrelateById(m => m.Message.OrderId));
             Event(() => OrderFulfillmentCompleted, x => x.CorrelateById(m => m.Message.OrderId));
+            Event(() => FulfillOrderFaulted, x=> x.CorrelateById(m => m.Message.Message.OrderId));
             Event(() => CheckOrder,x =>
             {
                 x.CorrelateById(m => m.Message.OrderId);
@@ -69,7 +77,7 @@ namespace Sample.Components.StateMachines
                 When(OrderSubmitted)
                     .Then(context =>
                     {
-                        Console.WriteLine("이미 Submit 되었는데, 왜 또 하는거죠. 😒");
+                        _logger.LogInformation("이미 Submit 되었는데, 왜 또 하는거죠. 😒");
                         context.Instance.SubmitDate ??= context.Data.Timestamp;
                         context.Instance.CustomerNumber ??= context.Data.CustomerNumber;
                         context.Instance.PaymentCardNumber ??= context.Data.PaymentCardNumber;
@@ -77,19 +85,26 @@ namespace Sample.Components.StateMachines
                 When(CustomerAccountClosed)
                     .Then(context =>
                     {
-                        Console.WriteLine("어어.. 고객이 이탈했네요. 주문 취소합니다.");
+                        _logger.LogInformation("어어.. 고객이 이탈했네요. 주문 취소합니다.");
                     })
                     .TransitionTo(Cancelled),
                 When(OrderAccepted)
                     .Then(x =>
                     {
-                        Console.WriteLine("@@@ OrderAccepted 수신됨.");
+                        _logger.LogInformation("@@@ OrderAccepted 수신됨.");
                     })
                     .Activity(x => x.OfType<AcceptOrderActivity>())
                     .TransitionTo(Accepted)
             );
 
             During(Accepted,
+                When(FulfillOrderFaulted)
+                    .Then(context =>
+                    {
+                        _logger.LogWarning("😫 FulfillOrder 처리에 실패했음. 실패한 메시지 : {FiledMessage}",
+                                context.Data.Exceptions.FirstOrDefault()?.Message ?? "N/A");
+                    })
+                    .TransitionTo(Faulted),
                 When(OrderFulfillmentCompleted)
                     .TransitionTo(Completed),
                 When(OrderFulfillmentFaulted)
@@ -137,6 +152,7 @@ namespace Sample.Components.StateMachines
         public Event<OrderAccepted> OrderAccepted { get; private set; }
         public Event<OrderFulfillmentCompleted> OrderFulfillmentCompleted { get; private set; }
         public Event<OrderFulfillmentFaulted> OrderFulfillmentFaulted { get; private set; }
+        public Event<Fault<FulfillOrder>> FulfillOrderFaulted { get; private set; }
     }
 
     public class OrderState 

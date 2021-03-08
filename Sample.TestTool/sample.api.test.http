@@ -38,11 +38,20 @@ DELETE {{host}}/customer?id=a495334d-7438-4ed6-95d1-94d83f061353&customerNumber=
 ### -----------------------------------------------
 ###         Fulfill Order 시나리오 테스트
 ###
-@orderId=3d96d8af-d15f-41c7-ad89-be27191248c3
-@customer=JimmyPage59
-@paymentCardNumber=5999-1234-5000-4321
+@orderId=9629666b-5632-4428-8df7-0bc7384505f8
+# @customer=MAYBE-JimmyPage70
+@customer=JohnLennon1
+@paymentCardNumber=4999-1234-5000-4321
 ### SubmitOrder -주문.
-POST {{host}}/order?id={{orderId}}&customerNumber={{customer}}&paymentCardNumber={{paymentCardNumber}}
+POST {{host}}/order
+Content-Type: application/json
+
+ {
+    "id":"{{orderId}}",
+    "customerNumber":"{{customer}}",
+    "paymentCardNumber":"{{paymentCardNumber}}",
+    "notes":"vscode에서 전송했어요."
+}
 
 ### CheckOrder - 현재 주문 상태 확인.
 GET {{host}}/order?id={{orderId}}

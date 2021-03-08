@@ -3,14 +3,43 @@ using System.Threading.Tasks;
 using MassTransit;
 using MassTransit.Courier;
 using MassTransit.Courier.Contracts;
+using Microsoft.Extensions.Logging;
+using MongoDB.Driver.Core.Operations;
 using Sample.Contracts;
 
 namespace Sample.Components.Consumers
 {
     public class FulfillOrderConsumer : IConsumer<FulfillOrder>
     {
+        private readonly ILogger<FulfillOrderConsumer> _logger;
+
+        public FulfillOrderConsumer(ILogger<FulfillOrderConsumer> logger)
+        {
+            _logger = logger;
+        }
+        
         public async Task Consume(ConsumeContext<FulfillOrder> context)
         {
+            
+            // precheck 예시
+            if (context.Message.CustomerNumber.StartsWith("INVALID"))
+            {
+                throw new InvalidOperationException("😥 노력은 했지만, 고객번호가 유효하지 않네요.");
+            }
+
+            if (context.Message.CustomerNumber.StartsWith("MAYBE"))
+            {
+                var retryCount = context.GetRetryAttempt(); //context.GetRetryCount();
+                _logger.LogInformation("@@@@@@@@ MAYBE 고객번호 재시도 횟수 : {RetryCount}", retryCount);
+                if (retryCount < 2)
+                {
+                    _logger.LogWarning("@@@@@@@ MAYBE 고객은 처리시간이 좀 걸립니다.");
+                    await Task.Delay(TimeSpan.FromSeconds(10));
+                    throw new ApplicationException("😐 어오. 한두번 해서는 고객번호 인증이 안될껀데요.");
+                }
+                _logger.LogInformation("@@@@@@@@ MAYBE 고객번호 인증됨");
+            }
+            
             var trackingNumber = NewId.NextGuid();
             var builder = new RoutingSlipBuilder(trackingNumber);
             

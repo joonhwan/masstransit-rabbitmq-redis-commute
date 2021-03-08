@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using MassTransit;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using Sample.Api.Models;
 using Sample.Contracts;
 
 namespace Sample.Api.Controllers
@@ -71,16 +72,17 @@ namespace Sample.Api.Controllers
         }
         
         [HttpPost]
-        public async Task<IActionResult> Post(Guid id, string customerNumber, string paymentCardNumber)
+        public async Task<IActionResult> Post(OrderModel order)//Guid id, string customerNumber, string paymentCardNumber)
         {
             // Consumer 는 1개 이상의 Message를 반환할 수 있다.
             // @more-than-one-response-message 
             var (accepted, rejected) = await _submitOrderRequestClient.GetResponse<OrderSubmissionAccepted, OrderSubmissionRejected>(new
             {
-                OrderId = id,
+                OrderId = order.Id,
                 Timestamp = InVar.Timestamp,//TimeStamp = InVar.Timestamp,
-                CustomerNumber = customerNumber,
-                PaymentCardNumber = paymentCardNumber
+                CustomerNumber = order.CustomerNumber,
+                PaymentCardNumber = order.PaymentCardNumber,
+                Notes = order.Notes,
             });
 
             if (accepted.IsCompletedSuccessfully)
