@@ -58,6 +58,8 @@ namespace Sample.Components.Consumers
                 // OrderId = context.Message.OrderId, // 아래에 Variable 로 전달해봄.
                 ItemNumber = "ITEM123",
                 Quantity = 10.0m
+                
+                // Argument로 MessageData<T> 를 쓸 수 있다고 함. 
             });
             
             // ... Activity 를 여러개 생성할 수 있음.

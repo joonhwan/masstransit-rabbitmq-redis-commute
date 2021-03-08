@@ -82,7 +82,13 @@ namespace Sample.Api.Controllers
                 Timestamp = InVar.Timestamp,//TimeStamp = InVar.Timestamp,
                 CustomerNumber = order.CustomerNumber,
                 PaymentCardNumber = order.PaymentCardNumber,
-                Notes = order.Notes,
+                // Notes = new
+                // {
+                //     Value = default(Task),
+                //     Address = default(Uri),
+                //     HasValue = default(bool)
+                // }  // --> Masstransit.Analyzer가 자동 생성하면 위와 같은 형태이지만, 이건 안쓴다.
+                Notes = order.Notes
             });
 
             if (accepted.IsCompletedSuccessfully)

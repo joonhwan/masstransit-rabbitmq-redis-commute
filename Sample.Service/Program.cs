@@ -11,6 +11,7 @@ using GreenPipes;
 using MassTransit.Courier.Contracts;
 using MassTransit.Definition;
 using MassTransit.MongoDbIntegration;
+using MassTransit.MongoDbIntegration.MessageData;
 using MassTransit.RabbitMqTransport;
 using MassTransit.RedisIntegration;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -149,6 +150,9 @@ namespace Sample.Service
             return Bus.Factory.CreateUsingRabbitMq(configurator =>
             {
                 configurator.Host("rabbitmq://admin:mirero@localhost:5672");
+                
+                // Sample.Api 서비스에서 MessageData<T> 형 첨부 데이터를 전송할 때 사용한 것과 동일한 설정을 해야함.
+                configurator.UseMessageData(new MongoDbMessageDataRepository("mongodb://localhost:27017", "attachments"));
                 
                 // @legacy-masstransit-batch-consumer-setup
                 // 수동 Consumer 등록해보기. (좀 더 나은 방법은 여전히 ConsumerDefinition<T> 를 사용하는 것. 

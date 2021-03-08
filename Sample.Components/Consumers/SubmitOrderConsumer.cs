@@ -47,13 +47,28 @@ namespace Sample.Components.Consumers
                 return;
             }
 
+            var notes = context.Message.Notes;
+            if (notes.HasValue)
+            {
+                // 와우. 어디에선가 notes의 내용을 따로 가져온다(Message 자체에는 포함되지 않고!!!)
+                var notesValue = await notes.Value;
+                _logger.LogWarning("😁😁😁  와우 note 값이 있네요. : {Notes}", notesValue);
+            }
+
             // context를 통해, 어떤 Message를  Consume하는 도중에 또 다른 Message를 Publish 할 수 있다. 
             await context.Publish<OrderSubmitted>(new
             {
                 OrderId = context.Message.OrderId,
                 Timestamp = context.Message.Timestamp,
                 CustomerNumber = context.Message.CustomerNumber,
-                PaymentCardNumber = context.Message.PaymentCardNumber
+                PaymentCardNumber = context.Message.PaymentCardNumber,
+                // Notes = new
+                // {
+                //     Value = default(Task),
+                //     Address = default(Uri),
+                //     HasValue = default(Boolean)
+                // }
+                Notes = context.Message.Notes // 사실, 이렇게 한다고 해서, 데이터 바이트 수 만큼이 Relay 되는것 아니다. --> MessageData<T> 의 특징.(물론 Threshold 보다 작은 바이트라면, Relay되겠지만...
             });
             
             // 아래 주석 처리된 부분은... 희한하게도 수신된 메시지에서 값이 자동 복사된다고 한다.

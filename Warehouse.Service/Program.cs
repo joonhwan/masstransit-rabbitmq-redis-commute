@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using GreenPipes;
 using MassTransit.Definition;
 using MassTransit.MongoDbIntegration;
+using MassTransit.MongoDbIntegration.MessageData;
 using MassTransit.RabbitMqTransport;
 using MassTransit.RedisIntegration;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -117,8 +118,12 @@ namespace Warehouse.Service
             return Bus.Factory.CreateUsingRabbitMq(configurator =>
             {
                 configurator.Host("rabbitmq://admin:mirero@localhost:5672");
+             
                 configurator.ConfigureEndpoints(serviceProvider);
                 
+                // Sample.Api 서비스에서 MessageData<T> 형 첨부 데이터를 전송할 때 사용한 것과 동일한 설정을 해야함.
+                configurator.UseMessageData(new MongoDbMessageDataRepository("mongodb://localhost:27017", "attachments"));
+
                 // Warehouse.Service 에서 실행되는 Saga Statemachine 이 Schedule 기능을 사용. 
                 // --> Schedule 된 메시지를 어디로 보내야 하는지 여기서 설정.(전송된 메시지는 Sample.Quartz.Service에서 수신하여, 필요한 곳으로 relay?)
                 //  (참고: https://masstransit-project.com/advanced/scheduling/ )
