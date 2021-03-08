@@ -7,12 +7,14 @@ using Sample.Components;
 using System.Linq;
 using System.Threading.Tasks;
 using GreenPipes;
+using MassTransit.Courier.Contracts;
 using MassTransit.Definition;
 using MassTransit.MongoDbIntegration;
 using MassTransit.RabbitMqTransport;
 using MassTransit.RedisIntegration;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
+using Sample.Components.BatchConsumers;
 using Sample.Components.Consumers;
 using Sample.Components.CourierActivities;
 using Sample.Components.StateMachines;
@@ -58,7 +60,20 @@ namespace Sample.Service
                         configurator.SetKebabCaseEndpointNameFormatter(); // @2 --> @! 처럼 해도되고?! 이게 더 읽기 편하네.
                         // SubmitOrderConsumer가 있는 assembly내의 모든 consumer를 추가. 
                         // IConsumer<T> 및 IConsumerDefinition<T> 를 모두 찾아서  configurator.AddConsumer() 한다...
-                        configurator.AddConsumersFromNamespaceContaining<SubmitOrderConsumer>();
+                        configurator.AddConsumersFromNamespaceContaining<SubmitOrderConsumer>(type =>
+                        {
+                            // Batch Consumer를 수동으로 등록하는 법을 배우기 위해 아래처럼 함.
+                            // --> 원본 강의에서 Batch Consumer는 자동등록될 때 문제가 있었으나, 현재 사용중인 MassTransit 버젼에서는 해결된 것 같다. 
+                            //     (...Batch<RoutingSlipCompleted>... 어쩌구 하는 Exchange 가 생성되지 않고, 깔끔하게, RoutingSlipCompleted 메시지가 바인딩된다. 
+                            // 그래도 수동 등록을 배우기 위해 아래처럼 일단 BatchEvent Consumer가 등록되지 않도록 한다.
+                            var filtered = true;
+                            if (type.Name == "RoutingSlipBatchEventConsumer")
+                            {
+                                filtered = false;
+                            }
+                            Console.WriteLine("--> Consumer 등록 확인 : {0} : added? = {1}", type.Name, filtered);
+                            return filtered;
+                        });
 
                         // 이 모듈에서 정의한 Actitivity 등록.
                         configurator.AddActivitiesFromNamespaceContaining<PaymentActivity>();
@@ -112,6 +127,31 @@ namespace Sample.Service
             return Bus.Factory.CreateUsingRabbitMq(configurator =>
             {
                 configurator.Host("rabbitmq://admin:mirero@localhost:5672");
+                
+                // 수동 Consumer 등록해보기. 
+                // if(false)
+                {
+                    var endpointName =
+                        KebabCaseEndpointNameFormatter.Instance.Consumer<RoutingSlipBatchEventConsumer>()
+                        // --> "routing-slip-batch-event" 문자열이 됨.
+                        ;
+                    
+                    configurator.ReceiveEndpoint(endpointName,
+                        endPoint =>
+                        {
+                            // 아래 batch.MessageLimit 보다는 커야 함. 안그러면, TimeLimit 에 항상 걸릴 수 밦아 없음.
+                            endPoint.PrefetchCount = 10; 
+                            
+                            endPoint.Batch<RoutingSlipCompleted>(batch => 
+                            {
+                                batch.MessageLimit = 10;
+                                batch.TimeLimit = TimeSpan.FromSeconds(5);
+                                batch.Consumer<RoutingSlipBatchEventConsumer, RoutingSlipCompleted>(serviceProvider);
+                            });
+                            
+                        });
+                }
+
                 configurator.ConfigureEndpoints(serviceProvider);
                 
                 // 사용자가 명시적으로 임의 EndPoint 를 만들고 설정가능.
