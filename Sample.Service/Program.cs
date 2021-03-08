@@ -5,6 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Sample.Components;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 using GreenPipes;
 using MassTransit.Courier.Contracts;
@@ -19,6 +20,8 @@ using Sample.Components.Consumers;
 using Sample.Components.CourierActivities;
 using Sample.Components.StateMachines;
 using Sample.Components.StateMachines.OrderStateMachineActivities;
+using Serilog;
+using Serilog.Events;
 using IHost = Microsoft.Extensions.Hosting.IHost;
 
 namespace Sample.Service
@@ -27,6 +30,18 @@ namespace Sample.Service
     {
         public static async Task Main(string[] args)
         {
+            const int eucKrCodePage = 51949; // euc-kr 코드 번호
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+            var eucKr = Encoding.GetEncoding(eucKrCodePage);
+            
+            Log.Logger = new LoggerConfiguration()
+                .MinimumLevel.Debug()
+                .MinimumLevel.Override("Microsoft", LogEventLevel.Information)
+                .Enrich.FromLogContext()
+                .WriteTo.Console()
+                .WriteTo.File("sample.service-.log", rollingInterval: RollingInterval.Day,  encoding: eucKr)
+                .CreateLogger();
+            
             var hostBuilder = CreateHostBuilder(args);
             var isWindowsService = !(Debugger.IsAttached || args.Contains("--console"));
             if (isWindowsService)
@@ -37,22 +52,29 @@ namespace Sample.Service
             {
                 await hostBuilder.RunConsoleAsync();
             }
+            
+            Log.CloseAndFlush();
         }
 
         private static IHostBuilder CreateHostBuilder(string[] args) =>
             Host.CreateDefaultBuilder(args)
                 .ConfigureLogging((context, logging) =>
                 {
-                    logging.AddConsole(options =>
-                    {
-                        options.TimestampFormat = "[HH:mm:ss] ";
-                    });
+                    // logging.AddConsole(options =>
+                    // {
+                    //     options.TimestampFormat = "[HH:mm:ss] ";
+                    // });
+                    logging.AddSerilog(dispose: true);
+                    logging.AddConfiguration(context.Configuration.GetSection("Logging"));
                 })
                 .ConfigureServices((hostContext, services) =>
                 {
                     // configurator.AddActivity() 로 할 수 없는 Automatanous 의 Activity 는 이런식으로...
                     //   ---> Statemachine 에서... x.OfType<AcceptOrderActivity() 부분이 동작하려면.. 이렇게 해야 됨.
                     services.AddScoped<AcceptOrderActivity>();
+                    
+                    // 수동으로 만들경우 일일이 이렇게 하나씩 DI 에 넣어야 함. 
+                    services.AddScoped<RoutingSlipBatchEventConsumer>();
                     
                     //services.TryAddSingleton(KebabCaseEndpointNameFormatter.Instance); --> 이렇게 해도 되고. @2 처럼 해도 되고? 
                     services.AddMassTransit(configurator =>
@@ -74,7 +96,7 @@ namespace Sample.Service
                             Console.WriteLine("--> Consumer 등록 확인 : {0} : added? = {1}", type.Name, filtered);
                             return filtered;
                         });
-
+                        
                         // 이 모듈에서 정의한 Actitivity 등록.
                         configurator.AddActivitiesFromNamespaceContaining<PaymentActivity>();
                         
@@ -128,7 +150,9 @@ namespace Sample.Service
             {
                 configurator.Host("rabbitmq://admin:mirero@localhost:5672");
                 
-                // 수동 Consumer 등록해보기. 
+                // @legacy-masstransit-batch-consumer-setup
+                // 수동 Consumer 등록해보기. (좀 더 나은 방법은 여전히 ConsumerDefinition<T> 를 사용하는 것. 
+                // ( @new-masstransit-batch-consumer-setup 참고)
                 // if(false)
                 {
                     var endpointName =
@@ -140,7 +164,7 @@ namespace Sample.Service
                         endPoint =>
                         {
                             // 아래 batch.MessageLimit 보다는 커야 함. 안그러면, TimeLimit 에 항상 걸릴 수 밦아 없음.
-                            endPoint.PrefetchCount = 10; 
+                            endPoint.PrefetchCount = 10; // 시험삼아 batch.MessageLimit 보다 작은값을 넣으면, time limit 에 의해 처리되는 걸 확인가능.
                             
                             endPoint.Batch<RoutingSlipCompleted>(batch => 
                             {
@@ -149,6 +173,10 @@ namespace Sample.Service
                                 batch.Consumer<RoutingSlipBatchEventConsumer, RoutingSlipCompleted>(serviceProvider);
                             });
                             
+                            // NOTE : skip 및 error 메시지 처리의 Customizing 은 아래처럼 할 수 있다고 함
+                            // 
+                            // endPoint.DiscardSkippedMessages(); // 해당 Endpoint 에 대하여 "*_skipped" queue 로 안보내지도록 함.
+                            // endPoint.DiscardFaultedMessages(); //                         "*_error" queue  
                         });
                 }
 

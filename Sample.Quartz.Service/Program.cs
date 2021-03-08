@@ -12,15 +12,31 @@ using Quartz.Impl;
 using System;
 using System.Diagnostics;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Data.Sqlite;
+using Serilog;
+using Serilog.Events;
 
 namespace Sample.Quartz.Service
 {
     class Program
     {
         static async Task Main(string[] args)
-        {
+        {   
+            const int eucKrCodePage = 51949; // euc-kr 코드 번호
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+            var eucKr = Encoding.GetEncoding(eucKrCodePage);
+            
+            Log.Logger = new LoggerConfiguration()
+                .MinimumLevel.Debug()
+                .MinimumLevel.Override("Microsoft", LogEventLevel.Information)
+                .Enrich.FromLogContext()
+                .WriteTo.Console()
+                .WriteTo.File("sample.quartz.service-.log", rollingInterval: RollingInterval.Day,  encoding: eucKr)
+                .CreateLogger();
+
+            
             var isService = !(Debugger.IsAttached || args.Contains("--console"));
 
             var builder = CreateHostBuilder(args);
@@ -33,6 +49,8 @@ namespace Sample.Quartz.Service
             {
                 await builder.RunConsoleAsync();
             }
+            
+            Log.CloseAndFlush();
         }
 
         static IHostBuilder CreateHostBuilder(string[] args) =>
@@ -47,10 +65,12 @@ namespace Sample.Quartz.Service
             })
             .ConfigureLogging((context, logging) =>
             {
-                logging.AddConsole(options =>
-                {
-                    options.TimestampFormat = "[HH:mm:ss] ";
-                });
+                // logging.AddConsole(options =>
+                // {
+                //     options.TimestampFormat = "[HH:mm:ss] ";
+                // });
+                logging.AddSerilog(dispose: true);
+                logging.AddConfiguration(context.Configuration.GetSection("Logging"));
             })
             .ConfigureServices((hostContext, services) =>
             {

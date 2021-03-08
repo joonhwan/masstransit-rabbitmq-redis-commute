@@ -4,6 +4,7 @@ using MassTransit;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 using GreenPipes;
 using MassTransit.Definition;
@@ -12,6 +13,8 @@ using MassTransit.RabbitMqTransport;
 using MassTransit.RedisIntegration;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
+using Serilog;
+using Serilog.Events;
 using Warehouse.Components.Consumers;
 using Warehouse.Components.CourierActivities;
 using Warehouse.Components.StateMachines;
@@ -23,6 +26,18 @@ namespace Warehouse.Service
     {
         public static async Task Main(string[] args)
         {
+            const int eucKrCodePage = 51949; // euc-kr 코드 번호
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+            var eucKr = Encoding.GetEncoding(eucKrCodePage);
+            
+            Log.Logger = new LoggerConfiguration()
+                .MinimumLevel.Debug()
+                .MinimumLevel.Override("Microsoft", LogEventLevel.Information)
+                .Enrich.FromLogContext()
+                .WriteTo.Console()
+                .WriteTo.File("warehouse.service-.log", rollingInterval: RollingInterval.Day, encoding: eucKr)
+                .CreateLogger();
+            
             var hostBuilder = CreateHostBuilder(args);
             var isWindowsService = !(Debugger.IsAttached || args.Contains("--console"));
             if (isWindowsService)
@@ -33,16 +48,20 @@ namespace Warehouse.Service
             {
                 await hostBuilder.RunConsoleAsync();
             }
+            
+            Log.CloseAndFlush();
         }
 
         private static IHostBuilder CreateHostBuilder(string[] args) =>
             Host.CreateDefaultBuilder(args)
                 .ConfigureLogging((context, logging) =>
                 {
-                    logging.AddConsole(options =>
-                    {
-                        options.TimestampFormat = "[HH:mm:ss] ";
-                    });
+                    // logging.AddConsole(options =>
+                    // {
+                    //     options.TimestampFormat = "[HH:mm:ss] ";
+                    // });
+                    logging.AddSerilog(dispose: true);
+                    logging.AddConfiguration(context.Configuration.GetSection("Logging"));
                 })
                 .ConfigureServices((hostContext, services) =>
                 {
