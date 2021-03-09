@@ -1,0 +1,21 @@
+﻿version: "3.7"
+
+services:
+  rabbitmq:
+    container_name: rabbitmq_study
+    image: masstransit/rabbitmq:latest
+    ports:
+      - "4369:4369"
+      - "5672:5672"
+      - "25672:25672"
+      - "15672:15672"
+    volumes:
+      - "rabbitmq_data:/bitnami"
+    environment:
+      - RABBITMQ_USERNAME=guest
+      - RABBITMQ_PASSWORD=guest
+      - RABBITMQ_COMMUNITY_PLUGINS=https://github.com/rabbitmq/rabbitmq-delayed-message-exchange/releases/download/3.8.9/rabbitmq_delayed_message_exchange-3.8.9-0199d11c.ez
+
+volumes:
+  rabbitmq_data:
+    driver: local
