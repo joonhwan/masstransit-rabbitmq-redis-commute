@@ -1,3 +1,10 @@
+학습시 코드에 주석으로 기록하지 못한 메모
+
+# Masstransit 조각 메모
+
+- Masstransit는 _acknowledgement mode_ 로 동작 한다. ([여기](https://masstransit-project.com/articles/outbox.html#the-in-memory-outbox) 참고)
+- [Outbox 를 사용하여 Resilient System 구성하는 영상](https://www.youtube.com/watch?v=P41IsVAc1nI&list=PLx8uyNNs1ri2MBx6BjPum5j9_MMdIfM9C&index=21) 다시 들여다보자.
+
 # masstransit 이 실제로 보낸 메시지의 형태 예시
 
 Properties(=header)의 내역은..

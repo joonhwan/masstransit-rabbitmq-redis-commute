@@ -1,0 +1,6 @@
+@host = https://localhost:5001
+### 
+GET {{host}}/weatherforecast
+
+### 
+POST {{host}}/trash/takeout?binNumber="trash-001"
