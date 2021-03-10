@@ -113,13 +113,15 @@ namespace Warehouse.Service
                     services.AddHostedService<MassTransitConsoleHostedService>();
                 });
 
-        private static IBusControl ConfigureBus(IServiceProvider serviceProvider)
+        private static IBusControl ConfigureBus(IRegistrationContext<IServiceProvider> context)
         {
+            var serviceProvider = context.Container;
             return Bus.Factory.CreateUsingRabbitMq(configurator =>
             {
                 configurator.Host("rabbitmq://admin:mirero@localhost:5672");
              
-                configurator.ConfigureEndpoints(serviceProvider);
+                //configurator.ConfigureEndpoints(serviceProvider);
+                configurator.ConfigureEndpoints(context, KebabCaseEndpointNameFormatter.Instance);
                 
                 // Sample.Api 서비스에서 MessageData<T> 형 첨부 데이터를 전송할 때 사용한 것과 동일한 설정을 해야함.
                 configurator.UseMessageData(new MongoDbMessageDataRepository("mongodb://localhost:27017", "attachments"));

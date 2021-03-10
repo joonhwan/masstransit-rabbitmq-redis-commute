@@ -4,6 +4,23 @@
 
 - Masstransit는 _acknowledgement mode_ 로 동작 한다. ([여기](https://masstransit-project.com/articles/outbox.html#the-in-memory-outbox) 참고)
 - [Outbox 를 사용하여 Resilient System 구성하는 영상](https://www.youtube.com/watch?v=P41IsVAc1nI&list=PLx8uyNNs1ri2MBx6BjPum5j9_MMdIfM9C&index=21) 다시 들여다보자.
+- `Automatonymous.Visualizer` 패키지의 `StateMachineGraphvizGenerator` 는 `Automatonymous.Graphing` 네임스페이스의 `GetGraph<TInstance>()` 확장메소드를 통해 Statemachine의 Statechart Diagram을 시각화할 수 있다.
+
+```cs
+ public void Show_me_the_StateMachine()
+        {
+            // 주어진 상태기계를 GraphViz 로 시각화가 가능.
+            var orderStateMachine = new OrderStateMachine();
+            var graph = orderStateMachine.GetGraph();
+            var generator = new StateMachineGraphvizGenerator(graph);
+            var dots = generator.CreateDotFile();
+            Console.WriteLine(dots);
+        }
+```
+
+- `MassTransit.Metadata.TypeMetadataCache` 를 사용하면, 단순히 `GetType()` 하는 것 보다 더 많은 정보를 알 수 있다. Message, Consumer, Statemachine 등의 type정보를 접근할 때 활용가능.
+- `IBusControl.GetProbeResult()` 는 Consumer, Saga Statemachine, Filter, 등 메시징 파이프라인의 모든 내역을 덤프한다. 따라서, 이 정보를 사용하면, 시스템의 구성을 시각화할 수도 있겠다.
+- Greenpipes 의 Payload 개념에 대해서 https://youtu.be/Y4Z5puk4jW4?t=3165 에서 확인.
 
 # masstransit 이 실제로 보낸 메시지의 형태 예시
 

@@ -1,5 +1,6 @@
 ﻿using System.Reflection;
 using System.Threading.Tasks;
+using GreenPipes;
 using MassTransit;
 using MassTransit.Definition;
 using MassTransit.EntityFrameworkCoreIntegration;
@@ -11,8 +12,10 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Serilog;
 using Serilog.Events;
+using TrashLantis.Components;
 using TrashLantis.Components.Consumers;
 using TrashLantis.Components.StateMachines;
+using TrashLantis.Contracts;
 
 namespace TrashLantis.Service
 {
@@ -35,10 +38,11 @@ namespace TrashLantis.Service
                 })
                 .ConfigureServices((hostContext, services) =>
                 {
+                    services.AddScoped<IMessageValidator<EmptyTrashBin>, MessageValidator<EmptyTrashBin>>();
                     services.TryAddSingleton(KebabCaseEndpointNameFormatter.Instance);
                     services.AddMassTransit(x =>
                     {
-                        x.AddConsumer<TrashConsumer>();
+                        x.AddConsumer<TrashConsumer>(typeof(TrashConsumerDefinition));
 
                         x.AddSagaStateMachine<TrashRemovalStateMachine, TrashRemovalState>(typeof(TrashRemovalSagaDefinition))
                             .EntityFrameworkRepository(r =>
@@ -55,7 +59,11 @@ namespace TrashLantis.Service
                                 });
                             });
 
-                        x.AddBus(provider => Bus.Factory.CreateUsingRabbitMq(cfg => cfg.ConfigureEndpoints(provider)));
+                        x.AddBus(provider => Bus.Factory.CreateUsingRabbitMq(cfg =>
+                        {
+                            cfg.ConfigureEndpoints(provider);
+                            // cfg.UseFilter(new ConsoleConsumeFilter());
+                        }));
                     });
 
                     services.AddSingleton<IHostedService, MassTransitConsoleHostedService>();

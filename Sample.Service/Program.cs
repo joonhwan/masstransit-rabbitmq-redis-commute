@@ -145,8 +145,10 @@ namespace Sample.Service
                     services.AddHostedService<MassTransitConsoleHostedService>();
                 });
 
-        private static IBusControl ConfigureBus(IServiceProvider serviceProvider)
+        private static IBusControl ConfigureBus(IRegistrationContext<IServiceProvider> context)
         {
+            var serviceProvider = context.Container;
+            
             return Bus.Factory.CreateUsingRabbitMq(configurator =>
             {
                 configurator.Host("rabbitmq://admin:mirero@localhost:5672");
@@ -184,7 +186,8 @@ namespace Sample.Service
                         });
                 }
 
-                configurator.ConfigureEndpoints(serviceProvider);
+                //configurator.ConfigureEndpoints(serviceProvider);
+                configurator.ConfigureEndpoints(context, KebabCaseEndpointNameFormatter.Instance);
                 
                 // 사용자가 명시적으로 임의 EndPoint 를 만들고 설정가능.
                 // configurator.ReceiveEndpoint("something-else", e =>

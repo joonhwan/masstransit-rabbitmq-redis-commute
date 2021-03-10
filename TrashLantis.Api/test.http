@@ -3,4 +3,4 @@
 GET {{host}}/weatherforecast
 
 ### 
-POST {{host}}/trash/takeout?binNumber="trash-001"
+POST {{host}}/trash/takeout?binNumber="trash-017"

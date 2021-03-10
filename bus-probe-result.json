@@ -1,0 +1,405 @@
+{
+  "resultId": "c397f112-587b-4097-ab65-a4ac2a081bce",
+  "probeId": "823b158e-3316-4747-86ea-19231ffc53fa",
+  "startTimestamp": "2021-03-10T05:12:13.5968975Z",
+  "duration": "00:00:00.0685472",
+  "host": {
+    "machineName": "OFFICE-JOONHWAN",
+    "processName": "dotnet",
+    "processId": 16904,
+    "assembly": "TrashLantis.Service",
+    "assemblyVersion": "1.0.0.0",
+    "frameworkVersion": "3.1.12",
+    "greenPipesVersion": "3.0.1.0",
+    "operatingSystemVersion": "Microsoft Windows NT 10.0.19042.0"
+  },
+  "results": {
+    "bus": {
+      "address": "rabbitmq://localhost:0/OFFICEJOONHWAN_TrashLantisService_bus_ihaoyynfsswfhzwabdcq8yaoff?temporary=true",
+      "host": {
+        "type": "RabbitMQ",
+        "host": "localhost",
+        "port": 5672,
+        "virtualHost": "/",
+        "username": "guest",
+        "password": "*****",
+        "heartbeat": 0,
+        "ssl": false,
+        "receiveEndpoint": [
+          {
+            "name": "trash",
+            "transport": {
+              "type": "RabbitMQ",
+              "exchangeName": "trash",
+              "exchangeArguments": [],
+              "exchangeType": "fanout",
+              "durable": true,
+              "autoDelete": false,
+              "queueName": "trash",
+              "exclusive": false,
+              "queueArguments": [],
+              "bindingArguments": [],
+              "prefetchCount": 16,
+              "purgeOnStartup": false,
+              "exclusiveConsumer": false,
+              "noAck": false,
+              "bindQueue": true,
+              "consumeArguments": [],
+              "topology": {
+                "exchange": [
+                  {
+                    "name": "trash",
+                    "type": "fanout",
+                    "durable": true,
+                    "autoDelete": false
+                  },
+                  {
+                    "name": "TrashLantis.Contracts:EmptyTrashBin",
+                    "type": "fanout",
+                    "durable": true,
+                    "autoDelete": false
+                  }
+                ],
+                "queue": {
+                  "name": "trash",
+                  "durable": true,
+                  "autoDelete": false,
+                  "exclusive": false
+                },
+                "exchange-binding": {
+                  "source": "TrashLantis.Contracts:EmptyTrashBin",
+                  "destination": "trash"
+                },
+                "queue-binding": {
+                  "source": "trash",
+                  "destination": "trash"
+                }
+              }
+            },
+            "filters": [
+              {
+                "filterType": "deadLetter",
+                "filters": {
+                  "filterType": "dead-letter"
+                }
+              },
+              {
+                "filterType": "rescue",
+                "filters": [
+                  {
+                    "filterType": "generateFault"
+                  },
+                  {
+                    "filterType": "moveFault"
+                  }
+                ]
+              },
+              {
+                "filterType": "deserialize",
+                "deserializers": {
+                  "json": {
+                    "contentType": "application/vnd.masstransit+json"
+                  },
+                  "bson": {
+                    "contentType": "application/vnd.masstransit+bson"
+                  },
+                  "xml": {
+                    "contentType": "application/vnd.masstransit+xml"
+                  }
+                },
+                "consumePipe": {
+                  "filters": {
+                    "filterType": "dispatchPipe",
+                    "outputType": "MassTransit.ConsumeContext<TrashLantis.Contracts.EmptyTrashBin>",
+                    "filters": [
+                      {
+                        "filterType": "@consoleConsumeWithMessageFilter"
+                      },
+                      {
+                        "filterType": "split",
+                        "splitType": "MassTransit.ConsumeContext",
+                        "filters": {
+                          "filterType": "@consoleConsumeFilter"
+                        },
+                        "output": "console"
+                      }
+                    ],
+                    "output": "console",
+                    "consumer": {
+                      "type": "TrashLantis.Components.Consumers.TrashConsumer",
+                      "consumerFactory": {
+                        "source": "scope",
+                        "consumerType": "TrashLantis.Components.Consumers.TrashConsumer",
+                        "provider": "dependencyInjection"
+                      },
+                      "filters": [
+                        {
+                          "filterType": "split",
+                          "consumerType": "TrashLantis.Components.Consumers.TrashConsumer",
+                          "filters": {
+                            "filterType": "@consoleConsumeWithConsumerFilter"
+                          },
+                          "output": "console"
+                        },
+                        {
+                          "filterType": "@consoleConsumeWithConsumerAndMessageFilter"
+                        }
+                      ],
+                      "output": "console",
+                      "consume": {
+                        "method": "Consume(ConsumeContext<TrashLantis.Contracts.EmptyTrashBin> context)"
+                      }
+                    }
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "name": "trash-removal-state",
+            "transport": {
+              "type": "RabbitMQ",
+              "exchangeName": "trash-removal-state",
+              "exchangeArguments": [],
+              "exchangeType": "fanout",
+              "durable": true,
+              "autoDelete": false,
+              "queueName": "trash-removal-state",
+              "exclusive": false,
+              "queueArguments": [],
+              "bindingArguments": [],
+              "prefetchCount": 16,
+              "purgeOnStartup": false,
+              "exclusiveConsumer": false,
+              "noAck": false,
+              "bindQueue": true,
+              "consumeArguments": [],
+              "topology": {
+                "exchange": [
+                  {
+                    "name": "trash-removal-state",
+                    "type": "fanout",
+                    "durable": true,
+                    "autoDelete": false
+                  },
+                  {
+                    "name": "TrashLantis.Contracts:TakeOutTheTrash",
+                    "type": "fanout",
+                    "durable": true,
+                    "autoDelete": false
+                  }
+                ],
+                "queue": {
+                  "name": "trash-removal-state",
+                  "durable": true,
+                  "autoDelete": false,
+                  "exclusive": false
+                },
+                "exchange-binding": {
+                  "source": "TrashLantis.Contracts:TakeOutTheTrash",
+                  "destination": "trash-removal-state"
+                },
+                "queue-binding": {
+                  "source": "trash-removal-state",
+                  "destination": "trash-removal-state"
+                }
+              }
+            },
+            "filters": [
+              {
+                "filterType": "deadLetter",
+                "filters": {
+                  "filterType": "dead-letter"
+                }
+              },
+              {
+                "filterType": "rescue",
+                "filters": [
+                  {
+                    "filterType": "generateFault"
+                  },
+                  {
+                    "filterType": "moveFault"
+                  }
+                ]
+              },
+              {
+                "filterType": "deserialize",
+                "deserializers": {
+                  "json": {
+                    "contentType": "application/vnd.masstransit+json"
+                  },
+                  "bson": {
+                    "contentType": "application/vnd.masstransit+bson"
+                  },
+                  "xml": {
+                    "contentType": "application/vnd.masstransit+xml"
+                  }
+                },
+                "consumePipe": {
+                  "filters": {
+                    "filterType": "dispatchPipe",
+                    "outputType": "MassTransit.ConsumeContext<TrashLantis.Contracts.TakeOutTheTrash>",
+                    "filters": [
+                      {
+                        "filterType": "retry",
+                        "retry-consumeContext": {
+                          "policy": "Interval",
+                          "limit": 4,
+                          "intervals": [
+                            "00:00:00.5000000",
+                            "00:00:01",
+                            "00:00:05",
+                            "00:00:30"
+                          ],
+                          "filter": "composite"
+                        }
+                      },
+                      {
+                        "filterType": "outbox",
+                        "type": "in-memory"
+                      },
+                      {
+                        "filterType": "split",
+                        "splitType": "MassTransit.ConsumeContext"
+                      },
+                      {
+                        "filterType": "correlationId"
+                      },
+                      {
+                        "filterType": "saga",
+                        "correlation": "Query",
+                        "property": "instance => instance.BinNumber",
+                        "sagaRepository": {
+                          "provider": "dependencyInjection"
+                        },
+                        "automatonymous": {
+                          "event": "TakeOutTheTrash",
+                          "dataType": "TrashLantis.Contracts.TakeOutTheTrash",
+                          "instanceType": "TrashLantis.Components.StateMachines.TrashRemovalState",
+                          "states": ["Initial", "Requested"]
+                        },
+                        "stateMachine": {
+                          "name": "TrashRemovalStateMachine",
+                          "instanceType": "TrashLantis.Components.StateMachines.TrashRemovalState",
+                          "currentStateProperty": "CurrentState",
+                          "state": [
+                            {
+                              "name": "Initial",
+                              "event": {
+                                "name": "TakeOutTheTrash",
+                                "dataType": "TrashLantis.Contracts.TakeOutTheTrash",
+                                "behavior": {
+                                  "then": {},
+                                  "publish": {},
+                                  "transition": {
+                                    "toState": "Requested"
+                                  }
+                                }
+                              }
+                            },
+                            {
+                              "name": "Requested",
+                              "event": {
+                                "name": "TakeOutTheTrash",
+                                "dataType": "TrashLantis.Contracts.TakeOutTheTrash",
+                                "behavior": {
+                                  "publish": {}
+                                }
+                              }
+                            },
+                            {
+                              "name": "Final"
+                            }
+                          ]
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "name": "OFFICEJOONHWAN_TrashLantisService_bus_ihaoyynfsswfhzwabdcq8yaoff",
+            "transport": {
+              "type": "RabbitMQ",
+              "exchangeName": "OFFICEJOONHWAN_TrashLantisService_bus_ihaoyynfsswfhzwabdcq8yaoff",
+              "exchangeArguments": [],
+              "exchangeType": "fanout",
+              "durable": false,
+              "autoDelete": true,
+              "queueName": "OFFICEJOONHWAN_TrashLantisService_bus_ihaoyynfsswfhzwabdcq8yaoff",
+              "exclusive": false,
+              "queueExpiration": "00:01:00",
+              "queueArguments": [],
+              "bindingArguments": [],
+              "prefetchCount": 16,
+              "purgeOnStartup": false,
+              "exclusiveConsumer": false,
+              "noAck": false,
+              "bindQueue": true,
+              "consumeArguments": [],
+              "topology": {
+                "exchange": {
+                  "name": "OFFICEJOONHWAN_TrashLantisService_bus_ihaoyynfsswfhzwabdcq8yaoff",
+                  "type": "fanout",
+                  "durable": false,
+                  "autoDelete": true
+                },
+                "queue": {
+                  "name": "OFFICEJOONHWAN_TrashLantisService_bus_ihaoyynfsswfhzwabdcq8yaoff",
+                  "durable": false,
+                  "autoDelete": false,
+                  "exclusive": false,
+                  "argument": {
+                    "key": "x-expires",
+                    "value": 60000
+                  }
+                },
+                "queue-binding": {
+                  "source": "OFFICEJOONHWAN_TrashLantisService_bus_ihaoyynfsswfhzwabdcq8yaoff",
+                  "destination": "OFFICEJOONHWAN_TrashLantisService_bus_ihaoyynfsswfhzwabdcq8yaoff"
+                }
+              }
+            },
+            "filters": [
+              {
+                "filterType": "deadLetter",
+                "filters": {
+                  "filterType": "dead-letter"
+                }
+              },
+              {
+                "filterType": "rescue",
+                "filters": [
+                  {
+                    "filterType": "generateFault"
+                  },
+                  {
+                    "filterType": "moveFault"
+                  }
+                ]
+              },
+              {
+                "filterType": "deserialize",
+                "deserializers": {
+                  "json": {
+                    "contentType": "application/vnd.masstransit+json"
+                  },
+                  "bson": {
+                    "contentType": "application/vnd.masstransit+bson"
+                  },
+                  "xml": {
+                    "contentType": "application/vnd.masstransit+xml"
+                  }
+                },
+                "consumePipe": {}
+              }
+            ]
+          }
+        ]
+      }
+    }
+  }
+}
