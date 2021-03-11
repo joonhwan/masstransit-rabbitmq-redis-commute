@@ -4,3 +4,7 @@ GET {{host}}/weatherforecast
 
 ### 
 POST {{host}}/trash/takeout?binNumber="trash-017"
+
+
+###
+POST {{host}}/job?duration=00:00:08
