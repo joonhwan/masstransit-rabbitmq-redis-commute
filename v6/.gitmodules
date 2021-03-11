@@ -1,6 +1,0 @@
-[submodule "Sample-Twitch"]
-	path = Sample-Twitch
-	url = https://github.com/MassTransit/Sample-Twitch.git
-[submodule "Trashlantis"]
-	path = Trashlantis
-	url = https://github.com/phatboyg/Trashlantis.git

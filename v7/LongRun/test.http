@@ -1,0 +1,6 @@
+@host = https://localhost:5001
+###
+POST {{host}}/job?command=easywork&duration=00:00:5
+
+###
+POST {{host}}/job?command=hardwork&duration=00:00:5
