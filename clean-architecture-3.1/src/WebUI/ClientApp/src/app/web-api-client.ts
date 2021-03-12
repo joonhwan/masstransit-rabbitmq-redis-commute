@@ -578,7 +578,7 @@ export class TodoListsClient implements ITodoListsClient {
 }
 
 export interface IWeatherForecastClient {
-    get(): Observable<WeatherForecast[]>;
+    get(page: number | undefined): Observable<WeatherForecast[]>;
 }
 
 @Injectable({
@@ -594,8 +594,12 @@ export class WeatherForecastClient implements IWeatherForecastClient {
         this.baseUrl = baseUrl ? baseUrl : "";
     }
 
-    get(): Observable<WeatherForecast[]> {
-        let url_ = this.baseUrl + "/api/WeatherForecast";
+    get(page: number | undefined): Observable<WeatherForecast[]> {
+        let url_ = this.baseUrl + "/api/WeatherForecast?";
+        if (page === null)
+            throw new Error("The parameter 'page' cannot be null.");
+        else if (page !== undefined)
+            url_ += "page=" + encodeURIComponent("" + page) + "&";
         url_ = url_.replace(/[?&]$/, "");
 
         let options_ : any = {
