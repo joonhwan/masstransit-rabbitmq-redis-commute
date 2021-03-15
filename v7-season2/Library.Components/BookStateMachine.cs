@@ -3,6 +3,7 @@ using Automatonymous;
 using Library.Contracts;
 using Library.Contracts.Messages;
 using MassTransit;
+using Microsoft.Extensions.Logging;
 
 namespace Library.Components
 {
@@ -10,13 +11,14 @@ namespace Library.Components
     [SuppressMessage("ReSharper", "UnassignedGetOnlyAutoProperty")]
     public class BookStateMachine : MassTransitStateMachine<BookSaga>
     {
-        public BookStateMachine()
+        public BookStateMachine(ILogger<BookStateMachine> logger)
         {
             // @use-global-topology-correlated
             // 만일, BookId 와 일치하는 Saga 가 Repository에 없으면, 새로운 CorrelationId 를 갖는
             // Saga 인스턴스가 하나 만들어진다. 
             Event(() => BookAdded, x => x.CorrelateById(m => m.Message.BookId));
             Event(() => ReservationRequested, x => x.CorrelateById(m => m.Message.BookId));
+            Event(() => BookReservationCanceled, x => x.CorrelateById(m => m.Message.BookId));
             
             // 상태값은 문자열로 저장된다(정수형값에 mapping 시킬 수도 있다. )
             InstanceState(x => x.CurrentState);
@@ -27,18 +29,28 @@ namespace Library.Components
                     .Then(CopyDataToInstance)
                     .TransitionTo(Available)
             );
-            
-            During(Available, 
+
+            During(Available,
                 When(ReservationRequested)
+                    .TransitionTo(Reserved)
                     .PublishAsync(context => context.Init<BookReserved>(new
                     {
                         ReservationId = context.Data.ReservationId,
                         Timestamp = context.Data.Timestamp,
                         MemberId = context.Data.MemberId,
-                        BookId = context.Data.BookId 
+                        BookId = context.Data.BookId
                     }))
-                    .TransitionTo(Reserved));
-            
+            );
+
+            During(Reserved,
+                When(BookReservationCanceled)
+                    .Then(context =>
+                    {
+                        logger.LogInformation("@@@ 어.. 책을 빌리겠다고 하고서는 안빌린 상태로 시간이 너무 지났네요. 책 상태는 다시 Available 이 됩니다. ");
+                    })
+                    .TransitionTo(Available)
+            );
+
             // DuringAny(
             //     When(BookAdded)
             //         .Then(CopyDataToInstance)
@@ -57,6 +69,7 @@ namespace Library.Components
 
         public Event<BookAdded> BookAdded { get; }
         public Event<ReservationRequested> ReservationRequested { get; }
+        public Event<BookReservationCanceled> BookReservationCanceled { get; }
         
         public State Available { get; }
         public State Reserved { get; }

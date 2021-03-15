@@ -36,7 +36,6 @@ namespace Library.Components
                         logger.LogInformation("책이 Reserved 됨 : ReservationId={ReservationId}", context.Data.ReservationId);
                     })
                     // BookReserved 를 Requested 상태에서 수신하면, ReservationExpired 메시지의 스케쥴을 건다.
-                    //.Schedule(ReservationExpiredSchedule, context => context.Init<ReservationExpired>(new { ReservationId = context.Data.ReservationId,}))
                     .Schedule(ReservationExpiredSchedule, context => context.Init<ReservationExpired>(new {context.Data.ReservationId}))
                     .TransitionTo(Reserved));
 
@@ -46,6 +45,11 @@ namespace Library.Components
                     {
                         logger.LogWarning("@@@@@@@@@@@@@@ 응? Expire되었네요. @@@@@@@@@@@@@@");
                     })
+                    .PublishAsync(context => context.Init<BookReservationCanceled>(new
+                    {
+                        BookId = context.Instance.BookId,
+                        ReservationId = context.Instance.CorrelationId
+                    }))
                     .Finalize()
             );
             

@@ -171,15 +171,31 @@ namespace Library.Components.Tests
             
             // 이런식으로 하면, Timing Issue가 있을 수 있다.
             // Assert.IsNotNull(SagaHarness.Sagas.ContainsInState(reservationId, StateMachine, x => x.Reserved));
-            Assert.That(await SagaHarness.Exists(reservationId, machine => machine.Reserved), Is.EqualTo(reservationId), 
-                "ReservationSaga 가 Reserved 상태가 아님");
+            
+            var reservationSaga = SagaHarness.SagaOf(reservationId);
+            var bookSaga = BookSagaHarness.SagaOf(bookId);
+            Assert.IsTrue(await reservationSaga.ExistsAs(m => m.Reserved), "ReservationSaga 가 Reserved 상태가 아님");
+            // Assert.IsTrue((await SagaHarness.Exists(reservationId, machine => machine.Reserved)).HasValue,
+            //     "ReservationSaga 가 Reserved 상태가 아님");
 
+            Assert.IsTrue(await bookSaga.ExistsAs(m => m.Reserved), "BookSaga 가  Reserved 상태가 아님.");
+            // Assert.IsTrue((await BookSagaHarness.Exists(bookId, machine => machine.Reserved)).HasValue, 
+            //     "BookSaga 가  Reserved 상태가 아님.");
+
+            await Time.Advance(TimeSpan.FromHours(24));
+
+            //await Task.Delay(5_000);
             
-            // Assert.IsNotEmpty(SagaHarness.Sagas.Select(context =>
-            //     context.CorrelationId == reservationId &&
-            //     context.RequestedAt == bookRequestedAt
-            // ));
-            
+            // TODO CHECK 아래에서 SagaHarness.Exists() 구문을 써서 reservation 인 것이 없는지 확인하는 방식으로는 테스트 불가!!!
+            // TODO --> 잘 생각해보면, 아주 짧은 시간동안에는 아직 Schedule 된 메시지가 처리가 미처 안된상태이므로..
+            // TODO --> 따라서, 이런 경우에는 SagaHarness.NotExists() 구문을 사용해야 harness 가 "대기" 를 할 수 있음. 
+            // existId = await SagaHarness.NotExists(reservationId);
+            // Assert.IsFalse(existId.HasValue, 
+            //     "ReservationSaga 가 아직도 Reserved 상태임");
+            // Assert.IsTrue((await BookSagaHarness.Exists(bookId, machine => machine.Available)).HasValue,
+            //     "BookSaga 가 Available 상태가 아님.");
+            Assert.IsTrue(await reservationSaga.NotExists());
+            Assert.IsTrue(await bookSaga.ExistsAs(m => m.Available));
         }
     }
 }
