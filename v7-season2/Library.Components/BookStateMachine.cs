@@ -1,5 +1,7 @@
-﻿using System.Diagnostics.CodeAnalysis;
+﻿using System;
+using System.Diagnostics.CodeAnalysis;
 using Automatonymous;
+using Automatonymous.Binders;
 using Library.Contracts;
 using Library.Contracts.Messages;
 using MassTransit;
@@ -33,18 +35,26 @@ namespace Library.Components
 
             During(Available,
                 When(ReservationRequested)
-                    .TransitionTo(Reserved)
-                    .PublishAsync(context => context.Init<BookReserved>(new
+                    .Then(context =>
                     {
-                        ReservationId = context.Data.ReservationId,
-                        Timestamp = context.Data.Timestamp,
-                        MemberId = context.Data.MemberId,
-                        BookId = context.Data.BookId,
-                        Duration = context.Data.Duration
-                    }))
+                        // 동시성 처리를 위해 Available 상태에서 처음 받은 ReservationRequested 메시지의 Id 를 적어둔다.
+                        context.Instance.ReservationId = context.Data.ReservationId; 
+                    })
+                    .PublishBookReserved()
+                    .TransitionTo(Reserved)
             );
 
             During(Reserved,
+                // 혹시  ReservationRequested 이 중복 전송된 경우...
+                When(ReservationRequested)
+                    // 여기서 reservationId 가 일치하는 경우에만 BookReserved 를 Publish해야 한다.
+                    .IfElse(context => context.Instance.ReservationId == context.Data.ReservationId,
+                        binder => binder.PublishBookReserved(),
+                        binder => binder.Then(context =>
+                        {
+                            logger.LogInformation(
+                                "@@@ 음. 이 책은 다른 Reservation 으로 이미 Reserved 된 것임. 수신된 ReservationRequested 메시지는 무시됨.");
+                        })),
                 When(BookReservationCanceled)
                     .Then(context =>
                     {
@@ -56,8 +66,17 @@ namespace Library.Components
             // TODO CHECK ME 여러 상태에서 처리해야 하는 공통사항이 있는경우, 아래처럼 할 수 있다!!
             During(Available, Reserved, //
                 When(BookCheckedOut)
+                    // TODO 음. Leave Event 에서 처리하는게 더 낫지 않나? see @leave
+                    .Then(context => context.Instance.ReservationId = default)
                     .TransitionTo(CheckedOut)
             );
+            
+            // @leave quantum state-machine 에서는 이런식으로 가이드했는데...
+            //
+            // WhenLeave(Reserved, _=> _.Then(context =>
+            // {
+            //     context.Instance.ReservationId = default;
+            // }));
             
             WhenEnterAny(binder => binder.Then(context =>
             {
@@ -88,6 +107,20 @@ namespace Library.Components
             inst.Title = data.Title;
             inst.AddedAt = data.Timestamp;
         }
+    }
 
+    public static class BookStateMachineExtensions
+    {
+        public static EventActivityBinder<BookSaga, ReservationRequested> PublishBookReserved(this EventActivityBinder<BookSaga, ReservationRequested> binder)
+        {
+            return binder.PublishAsync(context => context.Init<BookReserved>(new
+            {
+                ReservationId = context.Data.ReservationId,
+                Timestamp = InVar.Timestamp,
+                Duration = context.Data.Duration,
+                MemberId = context.Data.MemberId,
+                BookId = context.Data.BookId,
+            }));
+        }
     }
 }

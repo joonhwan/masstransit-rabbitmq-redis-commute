@@ -26,15 +26,46 @@ namespace Library.Components
 
             Schedule(() => ReservationExpiredSchedule, x => x.ReservationExpiredScheduleToken, schedule => schedule.Delay = TimeSpan.FromDays(1));
             
+            // 이 State machine 은  Message Out-of-Ordering 문제가 발생할 수 있다는 가정을 하고 작성됨. 
+            // 즉, ReservationRequested -> BookReserved -> BookCheckedOut 이 정상순서이지만, 
+            //     BookReserved -> ReservationRequested -> BookCheckedOut 순으로 들어올 수도 있다고 가정함.  
+
             Initially(
                 When(ReservationRequested)
-                    .Then(UpdateData)
-                    .TransitionTo(Requested)
+                    .Then(context =>
+                    {
+                        context.Instance.MemberId = context.Data.MemberId;
+                        context.Instance.BookId = context.Data.BookId;
+                        context.Instance.RequestedAt = context.Data.Timestamp;
+                    })
+                    .TransitionTo(Requested),
+                // TODO CHECKME 메시지는 순서가 뒤죽박죽 들어올 수 있다. 심지어.. ReservationExpired 도???. 
+                // 그렇다고, 아래처럼 하면 될까? 
+                When(BookReserved)
+                    .Then(context =>
+                    {
+                        context.Instance.MemberId = context.Data.MemberId;
+                        context.Instance.BookId = context.Data.BookId;
+                        context.Instance.ReservedAt = context.Data.Timestamp;
+                    })
+                    .Schedule(ReservationExpiredSchedule,
+                        context => context.Init<ReservationExpired>(new {context.Data.ReservationId}),
+                        context => context.Data.Duration ?? TimeSpan.FromDays(1))
+                    .TransitionTo(Reserved)
+                ,
+                When(ReservationExpired)
+                    .Finalize()
             );
 
             During(Requested,
+                // 중복으로 들어온 ReservationRequested 은 무시. 
+                When(ReservationRequested),
+                // --- 
                 When(BookReserved)
-                    .Then(UpdateReservedTimestamp)
+                    .Then(context =>
+                    {
+                        context.Instance.ReservedAt = context.Data.Timestamp;
+                    })
                     // BookReserved 를 Requested 상태에서 수신하면, ReservationExpired 메시지의 스케쥴을 건다.
                     // .Schedule(ReservationExpiredSchedule,
                     //     context => context.Init<ReservationExpired>(new {context.Data.ReservationId}))
@@ -45,6 +76,14 @@ namespace Library.Components
             );
 
             During(Reserved,
+                //  BookReserved가 중복으로 온 경우, 
+                When(BookReserved)
+                    // Re-schedule 은 harmless. Scheduler는 동일한 id(??) 에 대한 중복 Scheduling 에 대하여 시간만 새로 Reset한단다...
+                    .Schedule(ReservationExpiredSchedule,
+                        context => context.Init<ReservationExpired>(new {context.Data.ReservationId}),
+                        context => context.Data.Duration ?? TimeSpan.FromDays(1)),
+                Ignore(ReservationRequested), 
+                // --- 나머지
                 When(BookCheckedOut)
                     .Finalize(),
                 When(ReservationExpired)
@@ -76,20 +115,7 @@ namespace Library.Components
         public Event<BookCheckedOut> BookCheckedOut { get; }
         public Event<ReservationRequested> ReservationRequested { get; }
         public Event<ReservationExpired> ReservationExpired { get; }
-        public Event<ReservationCancellationRequested> ReservationCancellationRequested { get; } 
-        
-        private void UpdateData(BehaviorContext<ReservationSaga, ReservationRequested> context)
-        {
-            context.Instance.MemberId = context.Data.MemberId;
-            context.Instance.BookId = context.Data.BookId;
-            context.Instance.RequestedAt = context.Data.Timestamp;
-        }
-        
-        private void UpdateReservedTimestamp(BehaviorContext<ReservationSaga, BookReserved> context)
-        {
-            context.Instance.ReservedAt = context.Data.Timestamp;
-            // context.Instance.Duration = context.Data.Duration;
-        }
+        public Event<ReservationCancellationRequested> ReservationCancellationRequested { get; }
     }
     
     public static class ReservationStateMachineExtensions
