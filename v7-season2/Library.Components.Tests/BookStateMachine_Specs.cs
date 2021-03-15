@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Threading.Tasks;
 using Library.Contracts;
+using Library.Contracts.Messages;
 using Library.TestKit;
 using MassTransit;
 using MassTransit.Testing;
@@ -8,7 +10,8 @@ using NUnit.Framework;
 
 namespace Library.Components.Tests
 {
-    public class Book신규추가 : StateMachineTestFixture<BookStateMachine, BookSaga>
+    [SuppressMessage("ReSharper", "InconsistentNaming")]
+    public class Book신규추가_요청이_오면 : StateMachineTestFixture<BookStateMachine, BookSaga>
     {
         [Test]
         public async Task 새로운_BookId_메시지를_받으면_새로운_Saga_Instance가_만들어진다()

@@ -1,7 +1,6 @@
 ﻿using System;
-using System.ComponentModel;
-    
-namespace Library.Contracts
+
+namespace Library.Contracts.Messages
 {
     public interface BookAdded
     {

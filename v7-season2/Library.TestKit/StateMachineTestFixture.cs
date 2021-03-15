@@ -1,11 +1,13 @@
-﻿using System.Threading.Tasks;
+﻿using System.Diagnostics.CodeAnalysis;
+using System.Threading.Tasks;
 using Automatonymous;
+using Library.TestKit.Internals;
 using MassTransit;
 using MassTransit.Context;
 using MassTransit.ExtensionsDependencyInjectionIntegration;
-using MassTransit.TestFramework.Logging;
 using MassTransit.Testing;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
 using NUnit.Framework;
 using Quartz;
@@ -30,7 +32,8 @@ namespace Library.TestKit
             // NUnit 출력으로 Log 를 내보내는 Logger 생성기.(모든 Log Level 이 전부 다 Enable 된
             //  Masstransit.TestFramework.Logging.TestOutputLoggerFactory (NUnit의 실행환경하에서 출력을 뿜어내는 Logger를 만든다)
             services.AddSingleton<ILoggerFactory>(provider => new TestOutputLoggerFactory(enabled: true));
-
+            services.TryAdd(ServiceDescriptor.Singleton(typeof(ILogger<>), typeof(Logger<>)));
+            
             // @register-test-harness
             services.AddMassTransitInMemoryTestHarness(cfg =>
             {
