@@ -38,4 +38,37 @@ namespace Library.Components.Tests
                 "수신된 메시지의 BookId 에 해당하는 Saga가 없음.");
         }
     }
+    
+    [SuppressMessage("ReSharper", "InconsistentNaming")]
+    public class Book이_CheckOut되면 : StateMachineTestFixture<BookStateMachine, BookSaga>
+    {
+        [Test]
+        public async Task BookSaga는_CheckedOut상태가_된다()
+        {
+            var bookId = NewId.NextGuid();
+            var memberId = NewId.NextGuid();
+
+            await TestHarness.Bus.Publish<BookAdded>(new
+            {
+                BookId = bookId,
+                Isbn = "0307959123",
+                Title = "Gone with the Wind"
+            });
+
+            var bookSaga = SagaHarness.SagaOf(bookId);
+            Assert.IsTrue(await bookSaga.ExistsAs(machine => machine.Available), 
+                "책이 추가된 BookSaga는 Available상태여야 함");
+
+            await TestHarness.Bus.Publish<BookCheckedOut>(new
+            {
+                BookId = bookId,
+                Timestamp = InVar.Timestamp,
+                MemberId = memberId
+            });
+
+            Assert.IsTrue(await bookSaga.ExistsAs(machine => machine.CheckedOut), 
+                "BookSaga에서 책이 CheckOut된 상태여야함");
+
+        }
+    }
 }

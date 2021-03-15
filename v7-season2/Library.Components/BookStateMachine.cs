@@ -19,6 +19,7 @@ namespace Library.Components
             Event(() => BookAdded, x => x.CorrelateById(m => m.Message.BookId));
             Event(() => ReservationRequested, x => x.CorrelateById(m => m.Message.BookId));
             Event(() => BookReservationCanceled, x => x.CorrelateById(m => m.Message.BookId));
+            Event(() => BookCheckedOut, x => x.CorrelateById(m => m.Message.BookId));
             
             // 상태값은 문자열로 저장된다(정수형값에 mapping 시킬 수도 있다. )
             InstanceState(x => x.CurrentState);
@@ -38,7 +39,8 @@ namespace Library.Components
                         ReservationId = context.Data.ReservationId,
                         Timestamp = context.Data.Timestamp,
                         MemberId = context.Data.MemberId,
-                        BookId = context.Data.BookId
+                        BookId = context.Data.BookId,
+                        Duration = context.Data.Duration
                     }))
             );
 
@@ -46,10 +48,21 @@ namespace Library.Components
                 When(BookReservationCanceled)
                     .Then(context =>
                     {
-                        logger.LogInformation("@@@ 어.. 책을 빌리겠다고 하고서는 안빌린 상태로 시간이 너무 지났네요. 책 상태는 다시 Available 이 됩니다. ");
+                        logger.LogInformation("@@@ 책 예약 취소됨.");
                     })
                     .TransitionTo(Available)
             );
+
+            // TODO CHECK ME 여러 상태에서 처리해야 하는 공통사항이 있는경우, 아래처럼 할 수 있다!!
+            During(Available, Reserved, //
+                When(BookCheckedOut)
+                    .TransitionTo(CheckedOut)
+            );
+            
+            WhenEnterAny(binder => binder.Then(context =>
+            {
+                logger.LogInformation("Book Saga 상태 변경됨 : {State}", context.Instance.CurrentState);
+            }));
 
             // DuringAny(
             //     When(BookAdded)
@@ -58,6 +71,15 @@ namespace Library.Components
             // );
         }
 
+        public Event<BookAdded> BookAdded { get; }
+        public Event<ReservationRequested> ReservationRequested { get; }
+        public Event<BookReservationCanceled> BookReservationCanceled { get; }
+        public Event<BookCheckedOut> BookCheckedOut { get; }
+        
+        public State Available { get; }
+        public State Reserved { get; }
+        public State CheckedOut { get; }
+        
         private void CopyDataToInstance(BehaviorContext<BookSaga, BookAdded> context)
         {
             var inst = context.Instance;
@@ -67,11 +89,5 @@ namespace Library.Components
             inst.AddedAt = data.Timestamp;
         }
 
-        public Event<BookAdded> BookAdded { get; }
-        public Event<ReservationRequested> ReservationRequested { get; }
-        public Event<BookReservationCanceled> BookReservationCanceled { get; }
-        
-        public State Available { get; }
-        public State Reserved { get; }
     }
 }

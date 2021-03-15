@@ -13,7 +13,7 @@ using NUnit.Framework;
 namespace Library.Components.Tests
 {
     [SuppressMessage("ReSharper", "InconsistentNaming")]
-    public class Reservation요청이_오면 : StateMachineTestFixture<ReservationStateMachine, ReservationSaga>
+    public class ReservationSaga는_Reservation요청이_오면 : StateMachineTestFixture<ReservationStateMachine, ReservationSaga>
     {
         [Test]
         public async Task ReservationSaga가_생성된다()
@@ -45,7 +45,7 @@ namespace Library.Components.Tests
     }
     
     [SuppressMessage("ReSharper", "InconsistentNaming")]
-    public class 대출가능한_책에_대하여_Reservation_요청이_오면 : StateMachineTestFixture<ReservationStateMachine, ReservationSaga>
+    public class ReservationSaga는_대출가능한_책에_대하여_Reservation_요청이_오면 : StateMachineTestFixture<ReservationStateMachine, ReservationSaga>
     {
         // 여기서는 2개의 StateMachine 이 필요.
         protected override void ConfigureMassTransit(IServiceCollectionBusConfigurator cfg)
@@ -114,7 +114,7 @@ namespace Library.Components.Tests
     }
     
     [SuppressMessage("ReSharper", "InconsistentNaming")]
-    public class Reserved상태에서_Reservation이_만기되면 : StateMachineTestFixture<ReservationStateMachine, ReservationSaga>
+    public class ReservationSaga는_Reserved상태에서_Reservation이_만기되면 : StateMachineTestFixture<ReservationStateMachine, ReservationSaga>
     {
         // 여기서는 2개의 StateMachine 이 필요.
         protected override void ConfigureMassTransit(IServiceCollectionBusConfigurator cfg)
@@ -182,7 +182,7 @@ namespace Library.Components.Tests
             // Assert.IsTrue((await BookSagaHarness.Exists(bookId, machine => machine.Reserved)).HasValue, 
             //     "BookSaga 가  Reserved 상태가 아님.");
 
-            await Time.Advance(TimeSpan.FromHours(24));
+            await Time.Advance(TimeSpan.FromDays(1));
 
             //await Task.Delay(5_000);
             
@@ -198,4 +198,165 @@ namespace Library.Components.Tests
             Assert.IsTrue(await bookSaga.ExistsAs(m => m.Available));
         }
     }
+    
+    [SuppressMessage("ReSharper", "InconsistentNaming")]
+    public class ReservationSaga는_2일짜리_BookReserved된_Reserved상태에서_만기되면 : StateMachineTestFixture<ReservationStateMachine, ReservationSaga>
+    {
+        // 여기서는 2개의 StateMachine 이 필요.
+        protected override void ConfigureMassTransit(IServiceCollectionBusConfigurator cfg)
+        {
+            base.ConfigureMassTransit(cfg);
+            
+            // ReservationStateMachine 에, 추가로 BookStateMachine 을 명시적으로 생성.
+            cfg.AddSagaStateMachine<BookStateMachine, BookSaga>()
+                .InMemoryRepository();
+            cfg.AddSagaStateMachineTestHarness<BookStateMachine, BookSaga>();
+        }
+
+        [OneTimeSetUp]
+        public void SetupBookStateMachine()
+        {
+            //BookSagaHarness = Provider.GetRequiredSaga<BookStateMachine, BookSaga>();
+            BookSagaHarness =Provider.GetRequiredService<IStateMachineSagaTestHarness<BookSaga, BookStateMachine>>();
+            BookStateMachine = Provider.GetRequiredService<BookStateMachine>();
+        }
+
+        public BookStateMachine BookStateMachine { get; set; }
+        public IStateMachineSagaTestHarness<BookSaga, BookStateMachine> BookSagaHarness { get; set; }
+
+        [Test]
+        public async Task Reservation이_더_이상_Reserved_상태가_아님()
+        {
+            var bookId = NewId.NextGuid();
+            var reservationId = NewId.NextGuid();
+            var memberId = NewId.NextGuid();
+            var isbn = "1234567";
+            var bookAddedAt = new DateTime(2020, 12, 11);
+            var bookRequestedAt = new DateTime(2020, 12, 25);
+
+            await TestHarness.Bus.Publish<BookAdded>(new
+            {
+                BookId = bookId,
+                Timestamp = bookAddedAt,
+                Isbn = isbn,
+                Title = "Gone with the Wind"
+            });
+
+            var existId = await BookSagaHarness.Exists(bookId, machine => machine.Available);
+            Assert.IsTrue(existId.HasValue);
+            
+            await TestHarness.Bus.Publish<ReservationRequested>(new
+            {
+                ReservationId = reservationId,
+                Timestamp = bookRequestedAt,
+                MemberId = memberId,
+                BookId = bookId,
+                Duration = TimeSpan.FromDays(2)
+            });
+
+            // 실제로 Message를 Serialize 하고, 전송하는 모든 과정이 Simulation 된다.
+            
+            // 이런식으로 하면, Timing Issue가 있을 수 있다.
+            // Assert.IsNotNull(SagaHarness.Sagas.ContainsInState(reservationId, StateMachine, x => x.Reserved));
+            
+            var reservationSaga = SagaHarness.SagaOf(reservationId);
+            var bookSaga = BookSagaHarness.SagaOf(bookId);
+            
+            Assert.IsTrue(await reservationSaga.ExistsAs(m => m.Reserved), "ReservationSaga 가 Reserved 상태가 아님");
+            Assert.IsTrue(await bookSaga.ExistsAs(m => m.Reserved), "BookSaga 가  Reserved 상태가 아님.");
+            
+            await Time.Advance(TimeSpan.FromDays(1));
+
+            Assert.IsTrue(await reservationSaga.ExistsAs(m => m.Reserved),
+                "ReservationSaga 는 2일 중 1일만 지났으므로, 아직 Reserved 상태여야 함");
+            Assert.IsTrue(await bookSaga.ExistsAs(m => m.Reserved),
+                "BookSaga 는 여전히 Reserved 상태여야 함(2일이 만료일인데, 1일만 지난상태에서..)");
+
+            await Time.Advance(TimeSpan.FromDays(1)); // 하루 더 지나면...
+
+            Assert.IsTrue(await reservationSaga.NotExists(),
+                "ReservationSaga 는 Reserve 만기되면 사라져야 함.");
+            Assert.IsTrue(await bookSaga.ExistsAs(m => m.Available),
+                "BookSaga 는 2일뒤 Available상태로 돌아와야 함.");
+
+        }
+    }
+
+
+    [SuppressMessage("ReSharper", "InconsistentNaming")]
+    public class ReservationSaga는_Reserved상태에서_CheckOut_되면 : StateMachineTestFixture<ReservationStateMachine, ReservationSaga>
+    {
+        // 여기서는 2개의 StateMachine 이 필요.
+        protected override void ConfigureMassTransit(IServiceCollectionBusConfigurator cfg)
+        {
+            base.ConfigureMassTransit(cfg);
+            
+            // ReservationStateMachine 에, 추가로 BookStateMachine 을 명시적으로 생성.
+            cfg.AddSagaStateMachine<BookStateMachine, BookSaga>()
+                .InMemoryRepository();
+            cfg.AddSagaStateMachineTestHarness<BookStateMachine, BookSaga>();
+        }
+
+        [OneTimeSetUp]
+        public void SetupBookStateMachine()
+        {
+            //BookSagaHarness = Provider.GetRequiredSaga<BookStateMachine, BookSaga>();
+            BookSagaHarness =Provider.GetRequiredService<IStateMachineSagaTestHarness<BookSaga, BookStateMachine>>();
+            BookStateMachine = Provider.GetRequiredService<BookStateMachine>();
+        }
+
+        public BookStateMachine BookStateMachine { get; set; }
+        public IStateMachineSagaTestHarness<BookSaga, BookStateMachine> BookSagaHarness { get; set; }
+
+        [Test]
+        public async Task Reserved상태에서_Finalize상태로_되어야함()
+        {
+            var bookId = NewId.NextGuid();
+            var reservationId = NewId.NextGuid();
+            var memberId = NewId.NextGuid();
+            var isbn = "1234567";
+            var bookAddedAt = new DateTime(2020, 12, 11);
+            var bookRequestedAt = new DateTime(2020, 12, 25);
+
+            await TestHarness.Bus.Publish<BookAdded>(new
+            {
+                BookId = bookId,
+                Timestamp = bookAddedAt,
+                Isbn = isbn,
+                Title = "Gone with the Wind"
+            });
+
+            var existId = await BookSagaHarness.Exists(bookId, machine => machine.Available);
+            Assert.IsTrue(existId.HasValue);
+            
+            await TestHarness.Bus.Publish<ReservationRequested>(new
+            {
+                ReservationId = reservationId,
+                Timestamp = bookRequestedAt,
+                MemberId = memberId,
+                BookId = bookId
+            });
+
+            // 실제로 Message를 Serialize 하고, 전송하는 모든 과정이 Simulation 된다.
+            
+            // 이런식으로 하면, Timing Issue가 있을 수 있다.
+            // Assert.IsNotNull(SagaHarness.Sagas.ContainsInState(reservationId, StateMachine, x => x.Reserved));
+            
+            var reservationSaga = SagaHarness.SagaOf(reservationId);
+            var bookSaga = BookSagaHarness.SagaOf(bookId);
+            Assert.IsTrue(await reservationSaga.ExistsAs(m => m.Reserved), "ReservationSaga 가 Reserved 상태가 아님");
+            Assert.IsTrue(await bookSaga.ExistsAs(m => m.Reserved), "BookSaga 가  Reserved 상태가 아님.");
+
+            await TestHarness.Bus.Publish<BookCheckedOut>(new
+            {
+                BookId = bookId,
+                Timestamp = InVar.Timestamp,
+                MemberId = memberId
+            });
+            
+            Assert.IsTrue(await reservationSaga.NotExists());
+            Assert.IsTrue(await bookSaga.ExistsAs(m => m.CheckedOut));
+        }
+    }
+
 }
