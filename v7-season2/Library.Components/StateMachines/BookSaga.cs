@@ -1,7 +1,7 @@
 ﻿using System;
 using Automatonymous;
 
-namespace Library.Components
+namespace Library.Components.StateMachines
 {
     public class BookSaga : SagaStateMachineInstance
     {

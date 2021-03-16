@@ -1,7 +1,7 @@
 ﻿using System;
 using Automatonymous;
 
-namespace Library.Components
+namespace Library.Components.StateMachines
 {
     public class CheckOutSaga : SagaStateMachineInstance
     {
@@ -9,6 +9,7 @@ namespace Library.Components
         public string CurrentState { get; set; }
         
         public Guid BookId { get; set; }
+        public Guid MemberId { get; set; }
         public DateTime CheckOutDate { get; set; }
         public DateTime DueDate { get; set; }
     }

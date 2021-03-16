@@ -1,14 +1,12 @@
 ﻿using System;
 using System.Diagnostics.CodeAnalysis;
-using System.Threading.Tasks;
 using Automatonymous;
 using Automatonymous.Binders;
-using Library.Contracts;
 using Library.Contracts.Messages;
 using MassTransit;
 using Microsoft.Extensions.Logging;
 
-namespace Library.Components
+namespace Library.Components.StateMachines
 {
     [SuppressMessage("ReSharper", "UnusedMember.Global")]
     [SuppressMessage("ReSharper", "UnassignedGetOnlyAutoProperty")]

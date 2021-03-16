@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Library.Components
+namespace Library.Components.StateMachines
 {
     public interface CheckOutSettings
     {

@@ -1,12 +1,18 @@
 ﻿using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Threading.Tasks;
+using Library.Components.Services;
+using Library.Components.StateMachines;
+using Library.Components.Tests.Mocks;
 using Library.Contracts;
 using Library.Contracts.Messages;
 using Library.TestKit;
 using MassTransit;
+using MassTransit.ExtensionsDependencyInjectionIntegration;
+using MassTransit.Logging;
 using MassTransit.Testing;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using NUnit.Framework;
 
 namespace Library.Components.Tests
@@ -17,10 +23,11 @@ namespace Library.Components.Tests
         protected override void ConfigureServices(ServiceCollection services)
         {
             services.AddSingleton<CheckOutSettings>(new TestCheckOutSettings());
+            services.AddScoped<IMemberRegistry>(provider => new MockMemberRegistry(true));
         }
-        
+
         [Test]
-        public async Task 새로운_BookId_메시지를_받으면_새로운_Saga_Instance가_만들어진다()
+        public async Task 새로운_BookId_메시지를_받으면_새로운_Saga_Instance가_만들어지고_Activity가_수행된다()
         {
             var bookId = NewId.NextGuid();
             var checkOutId = NewId.NextGuid();
@@ -42,6 +49,8 @@ namespace Library.Components.Tests
             var checkOutSaga = SagaHarness.SagaOf(checkOutId);
             Assert.IsTrue(await checkOutSaga.Created(), "Saga 생성 안됨");
             Assert.IsTrue(await checkOutSaga.ExistsAs(m => m.CheckedOut), "CheckOut 상태가 아님.");
+
+            Assert.IsTrue(await TestHarness.Published.Any<NotifyMemberDueDate>(), "NotifyMemberDueDate 메시지 publish 안됨");
         }
     }
 
