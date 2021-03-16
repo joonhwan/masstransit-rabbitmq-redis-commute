@@ -60,7 +60,7 @@ namespace Library.Components.Tests
             cfg.AddSagaStateMachineTestHarness<BookStateMachine, BookSaga>();
         }
 
-        [OneTimeSetUp]
+        [SetUp]//[OneTimeSetUp]
         public void SetupBookStateMachine()
         {
             BookSagaHarness = Provider.GetRequiredService<IStateMachineSagaTestHarness<BookSaga, BookStateMachine>>();
@@ -129,7 +129,7 @@ namespace Library.Components.Tests
             cfg.AddSagaStateMachineTestHarness<BookStateMachine, BookSaga>();
         }
 
-        [OneTimeSetUp]
+        [SetUp]//[OneTimeSetUp]
         public void SetupBookStateMachine()
         {
             //BookSagaHarness = Provider.GetRequiredSaga<BookStateMachine, BookSaga>();
@@ -215,11 +215,11 @@ namespace Library.Components.Tests
             cfg.AddSagaStateMachineTestHarness<BookStateMachine, BookSaga>();
         }
 
-        [OneTimeSetUp]
+        [SetUp]
         public void SetupBookStateMachine()
         {
             //BookSagaHarness = Provider.GetRequiredSaga<BookStateMachine, BookSaga>();
-            BookSagaHarness =Provider.GetRequiredService<IStateMachineSagaTestHarness<BookSaga, BookStateMachine>>();
+            BookSagaHarness = Provider.GetRequiredService<IStateMachineSagaTestHarness<BookSaga, BookStateMachine>>();
             BookStateMachine = Provider.GetRequiredService<BookStateMachine>();
         }
 
@@ -298,7 +298,7 @@ namespace Library.Components.Tests
             cfg.AddSagaStateMachineTestHarness<BookStateMachine, BookSaga>();
         }
 
-        [OneTimeSetUp]
+        [SetUp]//OneTimeSetUp]
         public void SetupBookStateMachine()
         {
             //BookSagaHarness = Provider.GetRequiredSaga<BookStateMachine, BookSaga>();
@@ -424,7 +424,7 @@ namespace Library.Components.Tests
             cfg.AddSagaStateMachineTestHarness<BookStateMachine, BookSaga>();
         }
 
-        [OneTimeSetUp]
+        [SetUp]//OneTimeSetUp]
         public void SetupBookStateMachine()
         {
             //BookSagaHarness = Provider.GetRequiredSaga<BookStateMachine, BookSaga>();

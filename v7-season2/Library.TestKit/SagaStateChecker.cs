@@ -25,6 +25,8 @@ namespace Library.TestKit
             _correlationId = correlationId;
         }
 
+        public TInstance Instance => _harness.Sagas.Contains(_correlationId);
+
         public async Task<bool> ExistsAs(Func<TStateMachine, State> stateSelector)
         {
             var id = await _harness.Exists(_correlationId, machine => stateSelector?.Invoke(machine));

@@ -29,7 +29,9 @@ namespace Library.TestKit
             SystemTime.UtcNow = GetUtcNow;
             SystemTime.Now = GetNow;
         }
-        
+
+        public DateTime UtcNow => SystemTime.UtcNow().DateTime;
+
         public async Task Advance(TimeSpan duration)
         {
             if (duration <= TimeSpan.Zero)

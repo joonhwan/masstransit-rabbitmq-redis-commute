@@ -24,7 +24,7 @@ namespace Library.TestKit
         protected IStateMachineSagaTestHarness<TInstance, TStateMachine> SagaHarness;
         protected TStateMachine StateMachine;
         
-        [OneTimeSetUp]
+        [SetUp]//[OneTimeSetUp]
         public async Task Setup()
         {
             var services = new ServiceCollection();
@@ -71,7 +71,7 @@ namespace Library.TestKit
             StateMachine = Provider.GetRequiredService<TStateMachine>();
         }
 
-        [OneTimeTearDown]
+        [TearDown]
         public async Task Teardown()
         {
             try
