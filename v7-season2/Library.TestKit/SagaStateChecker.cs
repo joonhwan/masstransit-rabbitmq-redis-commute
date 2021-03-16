@@ -42,6 +42,11 @@ namespace Library.TestKit
             var id = await _harness.NotExists(_correlationId);
             return !id.HasValue;
         }
+
+        public async Task<bool?> Created()
+        {
+            return await _harness.Created.Any(x => x.CorrelationId == _correlationId);
+        }
     }
     
     public static class SagaHarnessExtensions

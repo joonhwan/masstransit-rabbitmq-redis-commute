@@ -45,6 +45,7 @@ namespace Library.Components.Tests
         [Test]
         public async Task BookSaga는_CheckedOut상태가_된다()
         {
+            var checkOutId = NewId.NextGuid();
             var bookId = NewId.NextGuid();
             var memberId = NewId.NextGuid();
 
@@ -61,6 +62,7 @@ namespace Library.Components.Tests
 
             await TestHarness.Bus.Publish<BookCheckedOut>(new
             {
+                CheckOutId = checkOutId,
                 BookId = bookId,
                 Timestamp = InVar.Timestamp,
                 MemberId = memberId
