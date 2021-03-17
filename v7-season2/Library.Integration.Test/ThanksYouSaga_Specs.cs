@@ -97,22 +97,28 @@ namespace Library.Integration.Test
                 TestHarness.TestTimeout);
             Assert.IsTrue(existsId.HasValue, "Saga did not transition to Ready");
         }
-
-        /*
+        
         [Test]
         public async Task Should_handle_status_checks()
-        {
+        {   
             var sagaId = NewId.NextGuid();
 
             var reservationId = NewId.NextGuid();
             var bookId = NewId.NextGuid();
             var memberId = NewId.NextGuid();
 
+            var client = TestHarness.Bus.CreateRequestClient<ThankYouStatusRequested>();
+            var response = await client.GetResponse<ThankYouStatus>(new
+            {
+                MemberId = memberId
+            });
+            Assert.That(response.Message.Status, Is.EqualTo("NotFound"));
+
             await TestHarness.Bus.Publish<BookCheckedOut>(new
             {
                 CheckOutId = InVar.Id,
-                bookId,
-                memberId,
+                BookId = bookId,
+                MemberId = memberId,
                 InVar.Timestamp,
                 __MessageId = sagaId
             });
@@ -123,9 +129,10 @@ namespace Library.Integration.Test
                 await repository.ShouldContainSagaInState(sagaId, StateMachine, x => x.Active, TestHarness.TestTimeout);
             Assert.IsTrue(existsId.HasValue, "Saga was not created using the MessageId");
 
-            var client = TestHarness.Bus.CreateRequestClient<GetThankYouStatus>();
-
-            var response = await client.GetResponse<ThankYouStatus>(new {memberId});
+            response = await client.GetResponse<ThankYouStatus>(new
+            {
+                MemberId = memberId
+            });
 
             Assert.That(response.Message.Status, Is.EqualTo("Active (State)"));
 
@@ -151,10 +158,12 @@ namespace Library.Integration.Test
                 TestHarness.TestTimeout);
             Assert.IsTrue(existsId.HasValue, "Saga did not transition to Ready");
 
-            response = await client.GetResponse<ThankYouStatus>(new {memberId});
+            response = await client.GetResponse<ThankYouStatus>(new
+            {
+                MemberId = memberId
+            });
 
             Assert.That(response.Message.Status, Is.EqualTo("Ready (State)"));
         }
-        */
     }
 }

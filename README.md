@@ -1,7 +1,8 @@
 학습시 코드에 주석으로 기록하지 못한 메모
 
-# Masstransit 조각 메모
+# 🍟 Masstransit 조각 메모
 
+- IntelliSense 가 없으면 사용이 힘들다. 😥
 - Masstransit는 _acknowledgement mode_ 로 동작 한다. ([여기](https://masstransit-project.com/articles/outbox.html#the-in-memory-outbox) 참고)
 - [Outbox 를 사용하여 Resilient System 구성하는 영상](https://www.youtube.com/watch?v=P41IsVAc1nI&list=PLx8uyNNs1ri2MBx6BjPum5j9_MMdIfM9C&index=21) 다시 들여다보자.
 - `Automatonymous.Visualizer` 패키지의 `StateMachineGraphvizGenerator` 는 `Automatonymous.Graphing` 네임스페이스의 `GetGraph<TInstance>()` 확장메소드를 통해 Statemachine의 Statechart Diagram을 시각화할 수 있다.
@@ -21,8 +22,25 @@
 - `MassTransit.Metadata.TypeMetadataCache` 를 사용하면, 단순히 `GetType()` 하는 것 보다 더 많은 정보를 알 수 있다. Message, Consumer, Statemachine 등의 type정보를 접근할 때 활용가능.
 - `IBusControl.GetProbeResult()` 는 Consumer, Saga Statemachine, Filter, 등 메시징 파이프라인의 모든 내역을 덤프한다. 따라서, 이 정보를 사용하면, 시스템의 구성을 시각화할 수도 있겠다.
 - Greenpipes 의 Payload 개념에 대해서 https://youtu.be/Y4Z5puk4jW4?t=3165 에서 확인.
+- MassTransit의 Initializer를 알아두면 좋을것 같다.
+  - `Task<T>` 형 값을 dynamic 객체 속성으로 넘기면, `context.Init<T>()` 에서는 알아서 `await` 해서 `T` 값을 적용한다. (소스코드내 `@masstransit-initializer-async-type-mapping` 검색)
+- InMemorySagaRepository 는 Transaction 을 지원하지 않는다????? see https://youtu.be/yfRRqPtqkgM?t=1297
+- Saga Repository 는 초기 생성시의 Concurrency 를 잘 생각해야 한다고 한다(Saga를 생성시키는 메시지가 여러개 있고, 이 것들이 만일 동시에 서로 다른 곳에서 처리되는 등.. )
+- Saga Repository 가 막 생성되어 Insert시 무슨 문제가 있다고 한다. https://masstransit-project.com/usage/sagas/automatonymous.html#initial-insert . 이것 때문에 아래 코드처럼 한단다.
 
-# masstransit 이 실제로 보낸 메시지의 형태 예시
+```cs
+       Event(() => BookReserved,
+               x =>
+               {
+                   x.CorrelateBy((state, context) =>
+                           state.BookId == context.Message.BookId && context.Message.MemberId == state.MemberId)
+                       .SelectId(context => context.MessageId ?? NewId.NextGuid());
+
+                   x.InsertOnInitial = true;  // <--------------- 이거!!!!!!!!!!
+               });
+```
+
+# 💌 masstransit 이 실제로 보낸 메시지의 형태 예시
 
 Properties(=header)의 내역은..
 
