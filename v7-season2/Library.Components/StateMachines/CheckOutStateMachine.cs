@@ -37,6 +37,14 @@ namespace Library.Components.StateMachines
                     });
                 }));
             });
+            Event(() => BookAddedToMemberCollection,
+                x =>
+                    x.CorrelateBy((saga, context) => saga.BookId == context.Message.BookId)
+            );
+            Event(() => AddBookToMemberCollectionFaulted,
+                // context.Message.Message.xxx  가 좀 이상해 보이지만, 첫번째는 Fault Message, 두번째는 이 Fault Message가 가지는 원본 메시지. 
+                x => x.CorrelateBy((saga, context) => saga.BookId == context.Message.Message.BookId)
+            );
             
             InstanceState(saga => saga.CurrentState);
 
@@ -51,6 +59,12 @@ namespace Library.Components.StateMachines
                     })
                     // DI Container 가 지원되도록 NotifyMemberActivity 를 생성/사용하려면. 아래처럼 하면 된다.
                     .Activity(x => x.OfInstanceType<NotifyMemberActivity>())
+                    // 다른 Consumer에게 작업요청..
+                    .PublishAsync(x => x.Init<AddBookToMemberCollection>(new
+                    {
+                        MemberId = x.Instance.MemberId,
+                        BookId = x.Instance.BookId
+                    }))
                     .TransitionTo(CheckedOut)
             );
 
@@ -92,11 +106,20 @@ namespace Library.Components.StateMachines
                                 DueDate = context.Instance.DueDate
                             })))
             );
+
+            DuringAny(
+                When(BookAddedToMemberCollection)
+                    .Then(context => logger.LogInformation("@@@@@ 오.. 사용자 컬렉션에 이 책이 추가 됬네요.")),
+                When(AddBookToMemberCollectionFaulted)
+                    .Then(context => logger.LogWarning("!!!!!!!! 음. 사용자 컬렉션에 추가가 안되네요!!!"))
+            );
         }
         public State CheckedOut { get; }
         
         public Event<BookCheckedOut> BookCheckedOut { get; }
         public Event<RenewCheckOut> RenewCheckOut { get; }
+        public Event<BookAddedToMemberCollection> BookAddedToMemberCollection { get; }
+        public Event<Fault<AddBookToMemberCollection>> AddBookToMemberCollectionFaulted { get; }
         
     }
 

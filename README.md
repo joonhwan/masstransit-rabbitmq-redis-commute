@@ -23,7 +23,26 @@
 - `IBusControl.GetProbeResult()` 는 Consumer, Saga Statemachine, Filter, 등 메시징 파이프라인의 모든 내역을 덤프한다. 따라서, 이 정보를 사용하면, 시스템의 구성을 시각화할 수도 있겠다.
 - Greenpipes 의 Payload 개념에 대해서 https://youtu.be/Y4Z5puk4jW4?t=3165 에서 확인.
 - MassTransit의 Initializer를 알아두면 좋을것 같다.
+
+  - `object` 형으로 받기 때문에, 속성구성이 동일한 여러 Type들간의 대입이 용이하다. 마치 duck typing 같다. 단점은???? 실수 할 수도 있겠지.... 그래서 Masstransit.Analyzer 같은 lint 도구를 만든거 같다. `@one-reason-to-use-message-initializer` 를 코드에서 검색해 보라. 마치 아래 코드 같은 개념...
+
+    ```cs
+    interface MessageA {
+      Guid MemberId { get; }
+    }
+    interface MessageB {
+      Guid MemberId { get; }
+    }
+
+    void HandleMessagA(MessageA  a)
+    {
+      // a 를 수신한 측에서..  아래처럼 b 에 a 를 대입..
+      _publisher.Publish<MessageB>(a);
+    }
+    ```
+
   - `Task<T>` 형 값을 dynamic 객체 속성으로 넘기면, `context.Init<T>()` 에서는 알아서 `await` 해서 `T` 값을 적용한다. (소스코드내 `@masstransit-initializer-async-type-mapping` 검색)
+
 - InMemorySagaRepository 는 Transaction 을 지원하지 않는다????? see https://youtu.be/yfRRqPtqkgM?t=1297
 - Saga Repository 는 초기 생성시의 Concurrency 를 잘 생각해야 한다고 한다(Saga를 생성시키는 메시지가 여러개 있고, 이 것들이 만일 동시에 서로 다른 곳에서 처리되는 등.. )
 - Saga Repository 가 막 생성되어 Insert시 무슨 문제가 있다고 한다. https://masstransit-project.com/usage/sagas/automatonymous.html#initial-insert . 이것 때문에 아래 코드처럼 한단다.
@@ -39,6 +58,8 @@
                    x.InsertOnInitial = true;  // <--------------- 이거!!!!!!!!!!
                });
 ```
+
+- Saga StateMachine 에서 Publish 하는것은 OK 지만, Request/Respond 는 가급적 하지 말아야함. (Saga가 해당 메시지 응답을 기다리는 동안 Lock 되며, 이렇게 되면 Saga Pattern의 의미가 축소됨. Saga Repository의 Lock 이 Pessimistic 인 경우에 그러함.)
 
 # 💌 masstransit 이 실제로 보낸 메시지의 형태 예시
 

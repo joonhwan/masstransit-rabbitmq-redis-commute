@@ -2,6 +2,7 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Threading.Tasks;
+using Library.Components.Consumers;
 using Library.Components.Services;
 using Library.Components.StateMachines;
 using Library.Components.Tests.Mocks;
@@ -28,10 +29,24 @@ namespace Library.Components.Tests
     [SuppressMessage("ReSharper", "InconsistentNaming")]
     public class CheckOutSaga는_Book이_CheckOut되면 : StateMachineTestFixture<CheckOutStateMachine, CheckOutSaga>
     {
+        private TestBookCollectionRepository _bookCollectionRepository;
+
+        public CheckOutSaga는_Book이_CheckOut되면()
+        {
+            _bookCollectionRepository = new TestBookCollectionRepository();
+        }
+        
         protected override void ConfigureServices(ServiceCollection services)
         {
             services.AddSingleton<CheckOutSettings>(new TestCheckOutSettings());
             services.AddScoped<IMemberRegistry>(provider => new MockMemberRegistry(true));
+            services.AddSingleton<IBookCollectionRepository>(_bookCollectionRepository);
+        }
+
+        protected override void ConfigureMassTransit(IServiceCollectionBusConfigurator cfg)
+        {
+            // base.ConfigureMassTransit(cfg);
+            cfg.AddConsumer<MemberCollectionConsumer>();
         }
 
         [Test]
@@ -60,8 +75,76 @@ namespace Library.Components.Tests
 
             Assert.IsTrue(await TestHarness.Published.Any<NotifyMemberDueDate>(), "NotifyMemberDueDate 메시지 publish 안됨");
         }
+        
+        [Test]
+        public async Task MemberCollection에_CheckOut된_책이_추가된다()
+        {
+            var bookId = NewId.NextGuid();
+            var checkOutId = NewId.NextGuid();
+            var memberId = NewId.NextGuid();
+
+            await TestHarness.Bus.Publish<BookCheckedOut>(new
+            {
+                CheckOutId = checkOutId,
+                BookId = bookId,
+                Timestamp = InVar.Timestamp,
+                MemberId = memberId
+            });
+
+            // 실제로 Message를 Serialize 하고, 전송하는 모든 과정이 Simulation 된다. 
+
+            Assert.IsTrue(await TestHarness.Published.Any<AddBookToMemberCollection>(), "AddBookToMemberCollection  메시지 publish 안됨");
+            
+            // 실제 처리가 되었는지 확인.
+            Assert.IsTrue(await TestHarness.Consumed.Any<AddBookToMemberCollection>());
+            Assert.IsTrue(await TestHarness.Published.Any<BookAddedToMemberCollection>());
+            Assert.IsTrue(await TestHarness.Consumed.Any<BookAddedToMemberCollection>());
+        }
+        
+        [Test]
+        public async Task MemberCollection에_CheckOut된_책이_추가에_실패해도_Fault_메시지는_처리된다()
+        {
+            var bookId = NewId.NextGuid();
+            var checkOutId = NewId.NextGuid();
+            var memberId = NewId.NextGuid();
+
+            _bookCollectionRepository.NextTimeShouldFail = true;
+            await TestHarness.Bus.Publish<BookCheckedOut>(new
+            {
+                CheckOutId = checkOutId,
+                BookId = bookId,
+                Timestamp = InVar.Timestamp,
+                MemberId = memberId
+            });
+
+            // 실제로 Message를 Serialize 하고, 전송하는 모든 과정이 Simulation 된다. 
+
+            Assert.IsTrue(await TestHarness.Published.Any<AddBookToMemberCollection>(), "AddBookToMemberCollection  메시지 publish 안됨");
+            
+            // 실제 처리가 되었는지 확인.
+            Assert.IsTrue(await TestHarness.Consumed.Any<AddBookToMemberCollection>());
+            Assert.IsTrue(await TestHarness.Published.Any<Fault<AddBookToMemberCollection>>());
+            Assert.IsTrue(await TestHarness.Consumed.Any<Fault<AddBookToMemberCollection>>());
+        }
     }
-    
+
+    public class TestBookCollectionRepository : IBookCollectionRepository
+    {
+        public bool NextTimeShouldFail { get; set; } = false;
+
+
+        public async Task Add(Guid memberId, Guid bookId)
+        {
+            if (NextTimeShouldFail)
+            {
+                NextTimeShouldFail = false; // 1 time.. only.
+                throw new InvalidOperationException("테스트목적으로 일부러 실패합니다");
+            }
+
+            await Task.Delay(1000);
+        }
+    }
+
     [SuppressMessage("ReSharper", "InconsistentNaming")]
     public class CheckOutSaga는_CheckOut이_Renew되면 : StateMachineTestFixture<CheckOutStateMachine, CheckOutSaga>
     {
