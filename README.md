@@ -164,12 +164,17 @@
   ```
 
 - Consumer 등록시, 특정 Endpoint 를 지정하려면 `cfg.AddConsumer<SubmitOrderConsumer>().EndPoint(x => x.Name = "submit-order")` 이런식으로 할 수 _도_ 있다.
+<<<<<<< HEAD
 
 - Request Timeout 관련해서 .... Quartz Scheduler만 Schedule 취소가 가능하다고 한다. RabbitMQ 는 요청 취소가 안된다. Azure Service는 또 된다고 한다.
 
 - v7.x 부터 Bus 는.. Start/Stop/Start/Stop ... 을 계속 반복할 수 있다(이전에는 불가능.) . 서비스를 재기동하지 않고도 새로운 메시지 or Topology 를 적용가능????
 
 - v7.x 부터 Consumer는 `context.IsResponseAccepted<TResponseMessage>()` 로 헤더에 포함된 응답메시지 유형정보를 사용하여 요청측이 해당 타입의 응답메시지를 받을 준비가 되었는지 확인 가능. --> 시스템 전체가 시간에 따라 기능이 분화되는 경우, Backward compatibility 를 부여할 수 있다.
+=======
+
+- Request Timeout 관련해서 .... Quartz Scheduler만 Schedule 취소가 가능하다고 한다. RabbitMQ 는 요청 취소가 안된다. Azure Service는 또 된다고 한다.
+>>>>>>> dbb60ee0f706ef450925d5449fe306c1a04b1415
 
 # 💌 masstransit 이 실제로 보낸 메시지의 형태 예시
 
