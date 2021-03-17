@@ -39,7 +39,7 @@ namespace Library.Components.Tests
                 "수신된 메시지의 BookId 에 해당하는 Saga가 없음.");
         }
     }
-    
+
     [SuppressMessage("ReSharper", "InconsistentNaming")]
     public class Book이_CheckOut되면 : StateMachineTestFixture<BookStateMachine, BookSaga>
     {
