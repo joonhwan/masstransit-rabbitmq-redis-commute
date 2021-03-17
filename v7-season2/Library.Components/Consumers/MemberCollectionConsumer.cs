@@ -25,5 +25,4 @@ namespace Library.Components.Consumers
             await context.Publish<BookAddedToMemberCollection>(context.Message); 
         }
     }
-
 }

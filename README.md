@@ -47,19 +47,125 @@
 - Saga Repository 는 초기 생성시의 Concurrency 를 잘 생각해야 한다고 한다(Saga를 생성시키는 메시지가 여러개 있고, 이 것들이 만일 동시에 서로 다른 곳에서 처리되는 등.. )
 - Saga Repository 가 막 생성되어 Insert시 무슨 문제가 있다고 한다. https://masstransit-project.com/usage/sagas/automatonymous.html#initial-insert . 이것 때문에 아래 코드처럼 한단다.
 
-```cs
-       Event(() => BookReserved,
-               x =>
-               {
-                   x.CorrelateBy((state, context) =>
-                           state.BookId == context.Message.BookId && context.Message.MemberId == state.MemberId)
-                       .SelectId(context => context.MessageId ?? NewId.NextGuid());
+  ```cs
+        Event(() => BookReserved,
+                x =>
+                {
+                    x.CorrelateBy((state, context) =>
+                            state.BookId == context.Message.BookId && context.Message.MemberId == state.MemberId)
+                        .SelectId(context => context.MessageId ?? NewId.NextGuid());
 
-                   x.InsertOnInitial = true;  // <--------------- 이거!!!!!!!!!!
-               });
-```
+                    x.InsertOnInitial = true;  // <--------------- 이거!!!!!!!!!!
+                });
+  ```
 
-- Saga StateMachine 에서 Publish 하는것은 OK 지만, Request/Respond 는 가급적 하지 말아야함. (Saga가 해당 메시지 응답을 기다리는 동안 Lock 되며, 이렇게 되면 Saga Pattern의 의미가 축소됨. Saga Repository의 Lock 이 Pessimistic 인 경우에 그러함.)
+- Saga StateMachine 에서 Publish 하는것은 OK 지만, Request/Respond 는 가급적 하지 말아야함. (Saga가 해당 메시지 응답을 기다리는 동안 Block되고 Repository는 Lock 되며, 이렇게 되면 Saga Pattern의 의미가 축소됨. Saga Repository의 Lock 이 Pessimistic 인 경우에 그러함.)
+- ---> 그럼에도 Reqest/Respond 를 써야 한다면, https://masstransit-project.com/usage/sagas/automatonymous.html#request 참고. 아래 `ChargingMemberFineRequest` 예시도 참고. (Request/Response 대신, Publish + 상태관리로도 얼마든지 할 수 있다. ... 그런데, v7.1 이 되면서 Request 기능에도 발전이 있었다고는 한다.)
+
+  ```cs
+  public class BookReturnStateMachine : MassTransitStateMachine<BookReturnSaga>
+    {
+        public BookReturnStateMachine(IEndpointNameFormatter namer)
+        {
+            Event(() => BookReturned, x => x.CorrelateById(m => m.Message.CheckOutId));
+
+            Request(() => ChargingMemberFineRequest, x => x.FineRequestId,
+                x =>
+                {
+                    // var endpoint = namer.Consumer<ChargeMemberFineConsumer>();
+                    // x.ServiceAddress = new Uri($"queue:{endpoint}");
+                    x.Timeout = TimeSpan.FromSeconds(10);
+                });
+
+            InstanceState(x => x.CurrentState);
+
+            Initially(
+                When(BookReturned)
+                    .Then(context =>
+                    {
+                        context.Instance.BookId = context.Data.BookId;
+                        context.Instance.MemberId = context.Data.MemberId;
+                        context.Instance.CheckOutAt = context.Data.Timestamp;
+                        context.Instance.ReturnedAt = context.Data.ReturnedAt;
+                        context.Instance.DueDate = context.Data.DueDate;
+                    })
+                    .IfElse(context => context.Data.ReturnedAt > context.Instance.DueDate,
+                        _ => _
+                            .Request(ChargingMemberFineRequest,
+                                context => context.Init<ChargeMemberFine>(new
+                                {
+                                    MemberId = context.Data.MemberId,
+                                    Amount = 123.45m,
+                                }))
+                            .TransitionTo(ChargingInProgress),
+                        _ => _
+                            .TransitionTo(Complete)
+                    )
+            );
+
+            During(ChargingInProgress,
+                When(ChargingMemberFineRequest.Completed)
+                    .TransitionTo(Complete),
+                When(ChargingMemberFineRequest.Faulted)
+                    .TransitionTo(ChargingFailed),
+                When(ChargingMemberFineRequest.TimeoutExpired)
+                    .TransitionTo(ChargingFailed)
+            );
+        }
+
+        public Event<BookReturned> BookReturned { get; }
+
+        public State ChargingInProgress { get; }
+        public State ChargingFailed { get; }
+        public State Complete { get; }
+
+        public Request<BookReturnSaga, ChargeMemberFine, FineCharged> ChargingMemberFineRequest { get; }
+    }
+  ```
+
+- `IConsumer<T>` 파생 클래스에서는 `Respond()` 도 할 수 있다!
+
+  ```cs
+  public class ChargingMemberFineConsumer : IConsumer<ChargingMemberFine>
+   {
+       public async Task Consume(ConsumeContext<ChargingMemberFine> context)
+       {
+           await Task.Delay(1000);
+
+           // Consumer는 ....
+           //
+           // - context.Publish<T>()
+           // - context.Send<T>
+           // ... 에 다가.. 받은 메시지에 응답까지 할 수 있음.
+           await context.RespondAsync<FineCharged>(context.Message);
+       }
+   }
+  }
+  ```
+
+- Unit Test 시 Message의 Type정보만으로 불충분하다면, message id 로 콕 집어서 그 메시지를 수신했냐 안했냐...를 아래처럼 확인가능.
+
+  ```cs
+      var messageId = NewId.NextGuid();
+
+      await TestHarness.Bus.Publish<BookReturned>(new
+      {
+          CheckOutId = checkOutId,
+          Timestamp = InVar.Timestamp,
+          BookId = bookId,
+          MemberId = memberId,
+          DueDate = dueDate,
+          ReturnedAt = returnedAt,
+          __MessageId = messageId
+      });
+
+      // 이렇게 해도 되네.. 콕 찝어서 딱 그 메시지! 라고 하려면, message id 를 사용해야 겠다.
+      Assert.IsTrue(await TestHarness.Consumed.Any<BookReturned>(x => x.Context.MessageId == messageId));
+  ```
+
+- Consumer 등록시, 특정 Endpoint 를 지정하려면 `cfg.AddConsumer<SubmitOrderConsumer>().EndPoint(x => x.Name = "submit-order")` 이런식으로 할 수 _도_ 있다.
+
+- Request Timeout 관련해서 .... Quartz Scheduler만 Schedule 취소가 가능하다고 한다. RabbitMQ 는 요청 취소가 안된다. Azure Service는 또 된다고 한다.
 
 # 💌 masstransit 이 실제로 보낸 메시지의 형태 예시
 
