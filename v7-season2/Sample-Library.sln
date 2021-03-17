@@ -8,6 +8,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Library.Components.Tests", 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Library.TestKit", "Library.TestKit\Library.TestKit.csproj", "{55BFFF5F-4AAD-43D2-9B28-679B2B90D816}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Library.Integration.Test", "Library.Integration.Test\Library.Integration.Test.csproj", "{BC2D7301-52F7-41FA-AAC7-C958B160B0D6}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -30,5 +32,9 @@ Global
 		{55BFFF5F-4AAD-43D2-9B28-679B2B90D816}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{55BFFF5F-4AAD-43D2-9B28-679B2B90D816}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{55BFFF5F-4AAD-43D2-9B28-679B2B90D816}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BC2D7301-52F7-41FA-AAC7-C958B160B0D6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BC2D7301-52F7-41FA-AAC7-C958B160B0D6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BC2D7301-52F7-41FA-AAC7-C958B160B0D6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BC2D7301-52F7-41FA-AAC7-C958B160B0D6}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

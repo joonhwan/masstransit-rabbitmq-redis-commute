@@ -1,4 +1,5 @@
-﻿using System.Diagnostics.CodeAnalysis;
+﻿using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Threading.Tasks;
 using Automatonymous;
 using Library.TestKit.Internals;
@@ -26,8 +27,10 @@ namespace Library.TestKit
         
         [SetUp]//[OneTimeSetUp]
         public async Task Setup()
-        {
+        {               
             var services = new ServiceCollection();
+
+            await BeforeSetup(services);
 
             // NUnit 출력으로 Log 를 내보내는 Logger 생성기.(모든 Log Level 이 전부 다 Enable 된
             //  Masstransit.TestFramework.Logging.TestOutputLoggerFactory (NUnit의 실행환경하에서 출력을 뿜어내는 Logger를 만든다)
@@ -42,9 +45,8 @@ namespace Library.TestKit
                 cfg.AddPublishMessageScheduler();
 
                 // @register-state-machine
-                cfg.AddSagaStateMachine<TStateMachine, TInstance>()
-                    .InMemoryRepository()
-                    ;
+                
+                ConfigureSaga(cfg.AddSagaStateMachine<TStateMachine, TInstance>());
                 
                 //@register-saga-test-harness
                 cfg.AddSagaStateMachineTestHarness<TStateMachine, TInstance>(); 
@@ -62,7 +64,9 @@ namespace Library.TestKit
             // see @register-test-harness
             TestHarness = Provider.GetRequiredService<InMemoryTestHarness>();
             Time = FakeSystemTime.For(TestHarness);
-            
+
+            var timeOut = TestHarness.TestTimeout;
+            //TestHarness.TestInactivityTimeout = TimeSpan.Zero;
             await TestHarness.Start();
 
             // see @register-saga-test-harness  
@@ -71,18 +75,37 @@ namespace Library.TestKit
             StateMachine = Provider.GetRequiredService<TStateMachine>();
         }
 
+        protected virtual void ConfigureSaga(ISagaRegistrationConfigurator<TInstance> cfg)
+        {
+            cfg.InMemoryRepository();
+        }
+
+
         [TearDown]
         public async Task Teardown()
         {
             try
             {
                 await TestHarness.Stop();
+                await AfterTearDown();
             }
             finally
             {
                 Time.Dispose();
                 await Provider.DisposeAsync();
             }
+        }
+        
+        protected virtual Task BeforeSetup(ServiceCollection services)
+        {
+            // no-op
+            return Task.CompletedTask;
+        }
+
+        protected virtual Task AfterTearDown()
+        {
+            //no -op
+            return Task.CompletedTask;
         }
         
         protected virtual void ConfigureLogging(ILoggerFactory loggerFactory)
