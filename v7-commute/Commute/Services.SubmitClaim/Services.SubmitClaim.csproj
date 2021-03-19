@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk.Worker">
+
+    <PropertyGroup>
+        <TargetFramework>netcoreapp3.1</TargetFramework>
+        <UserSecretsId>dotnet-Services.SubmitClaim-8440AE4D-C916-46C4-B7B0-8FC56A3147A0</UserSecretsId>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="MassTransit" Version="7.1.6" />
+        <PackageReference Include="MassTransit.Extensions.DependencyInjection" Version="7.1.6" />
+        <PackageReference Include="Microsoft.Extensions.Hosting" Version="3.1.13" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\Common\Common.csproj" />
+    </ItemGroup>
+</Project>

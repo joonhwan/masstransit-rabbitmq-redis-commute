@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk.Worker">
+
+    <PropertyGroup>
+        <TargetFramework>netcoreapp3.1</TargetFramework>
+        <UserSecretsId>dotnet-Demo04.ErrorHandling-409C8582-3E6A-4FED-A8E5-D32E5835B7B5</UserSecretsId>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="MassTransit" Version="7.1.6" />
+        <PackageReference Include="MassTransit.Extensions.DependencyInjection" Version="7.1.6" />
+        <PackageReference Include="MassTransit.RabbitMQ" Version="7.1.6" />
+        <PackageReference Include="Microsoft.Extensions.Hosting" Version="3.1.13" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\CommuteSystem\CommuteSystem.csproj" />
+    </ItemGroup>
+</Project>

@@ -1,0 +1,10 @@
+﻿{
+  "profiles": {
+    "Demo07.Interop.RawJson": {
+      "commandName": "Project",
+      "environmentVariables": {
+        "DOTNET_ENVIRONMENT": "Development"
+      }
+    }
+  }
+}

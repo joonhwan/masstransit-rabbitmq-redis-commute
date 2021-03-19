@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk.Worker">
+
+    <PropertyGroup>
+        <TargetFramework>netcoreapp3.1</TargetFramework>
+        <UserSecretsId>dotnet-ConfigureEndpoints-0F48E56B-2F00-4FF1-BADF-55CEC70DF5A8</UserSecretsId>
+        <LangVersion>9</LangVersion>
+        <RootNamespace>ConfigureEndpointsDemo</RootNamespace>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="MassTransit.Extensions.DependencyInjection" Version="7.1.6" />
+        <PackageReference Include="MassTransit.RabbitMQ" Version="7.1.6" />
+        <PackageReference Include="Microsoft.Extensions.Hosting" Version="3.1.13" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\CommuteSystem\CommuteSystem.csproj" />
+    </ItemGroup>
+</Project>

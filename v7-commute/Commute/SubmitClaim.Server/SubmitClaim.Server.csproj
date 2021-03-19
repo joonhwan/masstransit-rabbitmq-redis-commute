@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk.Worker">
+
+    <PropertyGroup>
+        <TargetFramework>netcoreapp3.1</TargetFramework>
+        <UserSecretsId>dotnet-SubmitClaim.Server-EB47ED8A-EB3F-4882-919D-6B47DE4814E0</UserSecretsId>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="MassTransit" Version="7.1.6" />
+        <PackageReference Include="MassTransit.Extensions.DependencyInjection" Version="7.1.6" />
+        <PackageReference Include="MassTransit.RabbitMQ" Version="7.1.6" />
+        <PackageReference Include="Microsoft.Extensions.Hosting" Version="3.1.13" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\CommuteSystem\CommuteSystem.csproj" />
+    </ItemGroup>
+</Project>

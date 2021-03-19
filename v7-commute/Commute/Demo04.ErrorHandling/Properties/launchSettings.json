@@ -1,0 +1,10 @@
+﻿{
+  "profiles": {
+    "Demo04.ErrorHandling": {
+      "commandName": "Project",
+      "environmentVariables": {
+        "DOTNET_ENVIRONMENT": "Development"
+      }
+    }
+  }
+}

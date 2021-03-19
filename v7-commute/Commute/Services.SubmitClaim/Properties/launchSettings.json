@@ -1,0 +1,10 @@
+﻿{
+  "profiles": {
+    "Services.SubmitClaim": {
+      "commandName": "Project",
+      "environmentVariables": {
+        "DOTNET_ENVIRONMENT": "Development"
+      }
+    }
+  }
+}

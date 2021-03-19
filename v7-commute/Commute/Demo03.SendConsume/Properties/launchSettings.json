@@ -1,0 +1,10 @@
+﻿{
+  "profiles": {
+    "Demo03.SendConsume": {
+      "commandName": "Project",
+      "environmentVariables": {
+        "DOTNET_ENVIRONMENT": "Development"
+      }
+    }
+  }
+}

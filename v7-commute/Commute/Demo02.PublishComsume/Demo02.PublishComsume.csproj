@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk.Worker">
+
+    <PropertyGroup>
+        <TargetFramework>netcoreapp3.1</TargetFramework>
+        <UserSecretsId>dotnet-PublishDemo-6599FDED-F6F9-438D-A2C0-488695E7806A</UserSecretsId>
+        <RootNamespace>PublishDemo</RootNamespace>
+        <LangVersion>9</LangVersion>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="MassTransit" Version="7.1.6" />
+        <PackageReference Include="MassTransit.Extensions.DependencyInjection" Version="7.1.6" />
+        <PackageReference Include="MassTransit.RabbitMQ" Version="7.1.6" />
+        <PackageReference Include="Microsoft.Extensions.Hosting" Version="3.1.13" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\CommuteSystem\CommuteSystem.csproj" />
+    </ItemGroup>
+</Project>

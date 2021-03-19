@@ -1,0 +1,10 @@
+﻿{
+  "profiles": {
+    "Demo06.Concurrency": {
+      "commandName": "Project",
+      "environmentVariables": {
+        "DOTNET_ENVIRONMENT": "Development"
+      }
+    }
+  }
+}
